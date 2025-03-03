@@ -6,5 +6,6 @@
   - p->val != p->next->val なら p->next = p->next->next とすれば良い．
 - と言うわけでポインタを一つにして書き直した結果，Accepted.
 # step2
-
+- p != nullptrっていうけど，条件式として結局pと同じなのでwhileの条件部はもっと簡単にかける
+  - どっちの方が可読性高いかはわからない．
 # step3
