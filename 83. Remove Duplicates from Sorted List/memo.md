@@ -79,6 +79,7 @@ public:
         return head;
     }
 };
+```
 
 # step3
 - 2種類のwhileを書いてそれぞれaccepted
