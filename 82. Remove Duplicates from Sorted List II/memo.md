@@ -66,29 +66,36 @@ public:
 - 1つ目の`if`とその中の`while`で`node->next`の存在確認が被っていたので`if`の方を削除
   - と思ったが，条件文の中で`node->next`の中身へのアクセスがあるから消せない．
   - 整理できそうだけど`while`の外の`node = node->next`が邪魔で`if`を`while`に置き換えるのもできないし，で悩み中
+- `else`の中身って絶対通る（verifiedへの付け加えなので必須）から，`else`はなくて良いことに気づいた．
+  - このコードを改めてコードを説明すると，
+    - 入力列を先頭から見ていく．
+    - 注目ノードとその次のノードの値を比較する(*)
+      - 等しいなら注目ノードを新しい値が出てくるまで進めて比較フェーズ(*)に戻る
+      - 等しくないなら，出力列の末尾に注目ノードを付け加える．この時，
+        - 注目ノードが入力列の末尾（正確には末尾の次，すなわちnullptr）なら出力列を返してプログラム終了
+        - 注目ノードが入力列の末尾でないなら注目ノードを一つ進めて比較フェーズ(*)に戻る
 - 変数名について，`sol`，`node`だと意味が分かりにくいので`verified`と`checking`に変更．
 ```C++
 class Solution {
 public:
     ListNode* deleteDuplicates(ListNode* head) {
         ListNode dummy(0);
-        ListNode *sol = &dummy;
-        ListNode *node = head;
+        ListNode *verified = &dummy;
+        ListNode *checking = head;
         while (true) {
-            if (node && node->next->val == node->val) {
-                while (node->next && node->val == node->next->val) {
-                    node = node->next;
+            if (checking && checking->next && checking->val == checking->next->val) {
+                while (checking->next && checking->val == checking->next->val) {
+                    checking = checking->next;
                 }
-                node = node->next;
+                checking = checking->next;
                 continue;
+            }
+            verified->next = checking;
+            verified = verified->next;
+            if (checking) {
+                checking = checking->next;
             } else {
-                sol->next = node;
-                sol = sol->next;
-                if (node) {
-                    node = node->next;
-                } else {
-                    break;
-                }
+                break;
             }
         }
         return dummy.next;
