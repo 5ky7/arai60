@@ -154,5 +154,28 @@ public:
     }
 };
 ```
+- 実は`verified`は使わなくても良い（以下のコード．checking->nextを操作する．）．
+- が，可読性からは`verified`と`checkingを使った方が良さそう（cf. 「自然言語で説明するときに『注目ノードの次の値と注目ノードの次の次の値が等しい』というより『注目ノードの値と注目ノードの次の値が等しい』という方が自然」「checking->nextが中心になるならそれを新たな変数としておく」）．
+- 入力リストから重複を切り取っていったものを出力とするのか（このコード），入力リストから重複しない要素を取り出して付け加えた新しいリストを出力とするのか（上記のコードたち）の違いとも言えそう．
+```c++
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        ListNode dummy(0, head);
+        ListNode *checking = &dummy;
+        while (checking->next) {
+            if (!checking->next->next || checking->next->val != checking->next->next->val) {
+                checking = checking->next;
+                continue;
+            }
+            int value_to_remove = checking->next->val;
+            while (checking->next && checking->next->val == value_to_remove) {
+                checking->next = checking->next->next;
+            }
+        }
+        return dummy.next;
+    }
+};
+```
 
 # Step3
