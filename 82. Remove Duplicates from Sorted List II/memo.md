@@ -108,6 +108,7 @@ public:
                     checking = checking->next;
                 }
                 checking = checking->next;
+                continue;
             }
             verified->next = checking;
             verified = verified->next;
