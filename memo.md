@@ -140,34 +140,6 @@ public:
 ```
 # Step 2
 - `digit`はわかりにくいかな．`checking_digit`に変更
-```c++
-class Solution {
-public:
-    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
-        ListNode dummy;
-        ListNode *checking_digit = &dummy;
-        int sum, carry = 0;
-        while (l1 || l2 ||carry) {
-            sum = carry;
-            if (l1) {
-                sum += l1->val;
-                l1 = l1->next;
-            }
-            if (l2) {
-                sum += l2->val;
-                l2 = l2->next;
-            }
-
-            carry = sum / 10;
-            sum = sum % 10;
-            checking_digit->next = new ListNode(sum);
-            checking_digit = checking_digit->next;
-        }
-
-        return dummy.next;
-    }
-};
-```
 - Tail recursionというものを知る．それで実装してみる．
   - `addTwoNumbers_recur(node->next, l1->next, l2->next, sum / 10)`みたいにできたら気分がいいなあと思ったが，`l1`が`nullptr`である可能性からして仕方ない
 ```c++
