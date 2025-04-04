@@ -1,7 +1,7 @@
 # Step 1
 - 問題となるのは繰り上がりの処理
 - 繰り上がりが生じる度に都度処理する方針で書いたのが以下のコード．
-  - dummyhead`sol`を用意
+  - 番兵`dummy`を用意
   - `l1`,`l2`は各桁を指す．桁が存在する間，
     - `l1`,`l2`（存在すれば）の値，及び繰り上がりを足し算．
     - 足し算の結果が
@@ -11,8 +11,8 @@
 class Solution {
 public:
     ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
-        ListNode sol;
-        ListNode *digit = &sol;
+        ListNode dummy;
+        ListNode *digit = &dummy;
         int sum;
         while (l1 || l2) {
             //if there was no carry up, add new digit to the output list;
@@ -42,7 +42,7 @@ public:
 
         }
 
-        return sol.next;
+        return dummy.next;
     }
 };
 ```
@@ -57,8 +57,8 @@ public:
 class Solution {
 public:
     ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
-        ListNode sol;
-        ListNode *digit = &sol;
+        ListNode dummy;
+        ListNode *digit = &dummy;
         int sum, carry = 0;
         while (l1 || l2 ||carry) {
             sum = carry;
@@ -77,9 +77,89 @@ public:
             digit = digit->next;
         }
 
-        return sol.next;
+        return dummy.next;
     }
 };
 ```
-- 一旦繰り上がりを無視して足し算して，最後に整形するのが以下のコード
+- 一旦繰り上がりを無視して足し算して，最後に整形するのが以下のコード.
+  - 作業を分けて行なっている分，わかりやすい？別にそんなこともない？
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        ListNode dummy;
+        ListNode *digit = &dummy;
+        int sum;
+
+        while (l1 || l2) {
+            sum = 0;
+            if (l1) {
+                sum += l1->val;
+                l1 = l1->next;
+            }
+            if (l2) {
+                sum += l2->val;
+                l2 = l2->next;
+            }
+
+            digit->next = new ListNode(sum);
+            digit = digit->next;
+        }
+
+        digit = dummy.next;
+        while (digit) {
+            if (digit->val > 9) {
+                digit->val -= 10;
+                if (digit->next) {
+                    digit->next->val++;
+                } else {
+                    digit->next = new ListNode(1);
+                }
+            }
+            digit = digit->next;
+        }
+
+        return dummy.next;
+    }
+};
+```
 # Step 2
+- `digit`はわかりにくいかな．`checking_digit`に変更
+```c++
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        ListNode dummy;
+        ListNode *checking_digit = &dummy;
+        int sum, carry = 0;
+        while (l1 || l2 ||carry) {
+            sum = carry;
+            if (l1) {
+                sum += l1->val;
+                l1 = l1->next;
+            }
+            if (l2) {
+                sum += l2->val;
+                l2 = l2->next;
+            }
+
+            carry = sum / 10;
+            sum = sum % 10;
+            checking_digit->next = new ListNode(sum);
+            checking_digit = checking_digit->next;
+        }
+
+        return dummy.next;
+    }
+};
+```
