@@ -1,14 +1,3 @@
-<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js">
-</script>
-<script type="text/x-mathjax-config">
- MathJax.Hub.Config({
- tex2jax: {
- inlineMath: [['$', '$'] ],
- displayMath: [ ['$$','$$'], ["\\[","\\]"] ]
- }
- });
-</script>
-
 # Step 1
 - 問題となるのは繰り上がりの処理
 - 繰り上がりが生じる度に都度処理する方針で書いたのが以下のコード．
@@ -63,7 +52,10 @@ public:
   - 最後に`sum`と10の大小で分岐させてるけど，繰り上がりを格納する変数`carry`を導入して最初に`sum = carry`とすれば分岐の必要がない．
 - ということで出来上がったのが以下のコード
   - ただしこっちは実行時間3ms．上のコードは1ms以下とのこと．なぜ？（使用メモリは両者77MB程度で近しい）
-    - 計算量はどちらも$O(max{len(l1),len(l2)})$のはず．
+    - オーダー表記上の計算量はどちらも
+$$O\(\max \( \text{len}(l1),\text{len}(l2) \) \)$$
+
+
 ```c++
 class Solution {
 public:
