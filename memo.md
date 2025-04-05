@@ -89,16 +89,6 @@ public:
 - 一旦繰り上がりを無視して足し算して，最後に整形するのが以下のコード.
   - 作業を分けて行なっている分，わかりやすいかなあと思って書いてみたが，今回は別にわかりやすくなっていなさそう．
 ```c++
-/**
- * Definition for singly-linked list.
- * struct ListNode {
- *     int val;
- *     ListNode *next;
- *     ListNode() : val(0), next(nullptr) {}
- *     ListNode(int x) : val(x), next(nullptr) {}
- *     ListNode(int x, ListNode *next) : val(x), next(next) {}
- * };
- */
 class Solution {
 public:
     ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
@@ -143,16 +133,6 @@ public:
 - Tail recursionというものを知る．それで実装してみる．
   - `addTwoNumbers_recur(node->next, l1->next, l2->next, sum / 10)`みたいにできたら気分がいいなあと思ったが，`l1`が`nullptr`である可能性からして仕方ない
 ```c++
-/**
- * Definition for singly-linked list.
- * struct ListNode {
- *     int val;
- *     ListNode *next;
- *     ListNode() : val(0), next(nullptr) {}
- *     ListNode(int x) : val(x), next(nullptr) {}
- *     ListNode(int x, ListNode *next) : val(x), next(next) {}
- * };
- */
 class Solution {
 public:
     ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
@@ -185,3 +165,55 @@ public:
 ```
 - この再帰，なんか違和感あるなあと思ったが，私が`x[i] = recursion_func(x[i-1])`みたいな形の使い方しか見てこなかったからかもしれない．返り値を`carry`に対応させればそのような再帰にもできる．
 - dummyを使わない方法もあるが，`head`がnullかどうかの条件分岐を入れる必要がある．私はdummyを使った方が好み．
+- 2つに限らず複数の値の足し算の関数を作って，そのインスタンスとして解いてみる．
+```c++
+#include <vector>
+using std::vector;
+
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        ListNode dummy;
+
+        vector<ListNode*> myLists = {l1, l2};
+        addNumbers(myLists, dummy);
+        return dummy.next;
+    }
+
+    void addNumbers(vector<ListNode*>& lists, ListNode& dummy) {
+        ListNode *checking = &dummy;
+        int sum, carry = 0;
+
+        while (is_there_empty_ptr(lists) || carry) {
+            sum = carry;
+            calcSum(lists, sum);
+
+            checking->next = new ListNode(sum % 10);
+            checking = checking->next;
+            carry = sum / 10;
+        }
+    }
+
+    bool is_there_empty_ptr(vector<ListNode*>& lists) {
+        int len = lists.size();
+        for (int i=0; i<len; i++){
+            if (lists.at(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void calcSum(vector<ListNode*>& lists, int& sum) {
+        int len = lists.size();
+        for (int i=0; i<len; i++){
+            if (lists.at(i)) {
+                sum += lists.at(i)->val;
+                lists.at(i) = lists.at(i)->next;
+            }
+        }
+    }
+    
+
+};
+```
