@@ -165,7 +165,8 @@ public:
 ```
 - この再帰，なんか違和感あるなあと思ったが，私が`x[i] = recursion_func(x[i-1])`みたいな形の使い方しか見てこなかったからかもしれない．返り値を`carry`に対応させればそのような再帰にもできる．
 - dummyを使わない方法もあるが，`head`がnullかどうかの条件分岐を入れる必要がある．私はdummyを使った方が好み．
-- 2つに限らず複数の値の足し算の関数を作って，そのインスタンスとして解いてみる．
+- 2つに限らず複数の値の足し算の関数を作って，そのインスタンスとして解いてみる（下のコード）．
+  - `addTwoNumbers`と`addNumbers`の返り値とか引数が合ってないのは気持ち悪いなと思って修正したところ（下の下のコード），なぜか実行時間が3msから7ms程度まで増加
 ```c++
 #include <vector>
 using std::vector;
@@ -192,6 +193,54 @@ public:
             checking = checking->next;
             carry = sum / 10;
         }
+    }
+
+    bool is_there_empty_ptr(vector<ListNode*>& lists) {
+        int len = lists.size();
+        for (int i=0; i<len; i++){
+            if (lists.at(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void calcSum(vector<ListNode*>& lists, int& sum) {
+        int len = lists.size();
+        for (int i=0; i<len; i++){
+            if (lists.at(i)) {
+                sum += lists.at(i)->val;
+                lists.at(i) = lists.at(i)->next;
+            }
+        }
+    }
+    
+
+};
+```
+```c++
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        vector<ListNode*> myLists = {l1, l2};
+        return addNumbers(myLists);
+    }
+
+    ListNode* addNumbers(vector<ListNode*>& lists) {
+        ListNode dummy;
+        ListNode *checking = &dummy;
+        int sum, carry = 0;
+
+        while (is_there_empty_ptr(lists) || carry) {
+            sum = carry;
+            calcSum(lists, sum);
+
+            checking->next = new ListNode(sum % 10);
+            checking = checking->next;
+            carry = sum / 10;
+        }
+        
+        return dummy.next;
     }
 
     bool is_there_empty_ptr(vector<ListNode*>& lists) {
