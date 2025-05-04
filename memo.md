@@ -120,3 +120,56 @@ public:
 
 
 # Step 2
+- heapの構造を実装してみた（諸事情によりPython）
+```python
+class heap_:
+  def __init__(self, nums):
+    self.tree = []
+    if nums:
+      for num in nums:
+        self.add(num)
+    
+  def add(self, x):
+    self.tree.append(x)
+    len_tree = len(self.tree)
+    i_x = len_tree - 1
+    i_parent = (i_x - 1)// 2
+    while i_x > 0 and x > self.tree[i_parent]:
+      self.tree[i_parent], self.tree[i_x] = self.tree[i_x], self.tree[i_parent]
+      i_x = i_parent
+      i_parent = (i_x - 1) // 2
+
+  
+  def max(self):
+    if not self.tree:
+      return None
+    return self.tree[0]
+  
+  
+  def pop(self):
+    if not self.tree:
+      return None
+    if len(self.tree) == 1:
+      self.tree = []
+      return None
+    
+    self.tree[0] = self.tree.pop()
+    self._heapify_down(0)
+ 
+  def _heapify_down(self, i):
+    while True:
+      left = 2*i + 1
+      right = 2*i + 2
+      largest = i
+
+      len_tree = len(self.tree)
+      if left < len_tree and self.tree[largest] < self.tree[left]:
+        largest = left
+      elif right < len_tree and self.tree[largest] < self.tree[right]:
+        largest = right
+      
+      if largest != i:
+        self.tree[i], self.tree[largest] = self.tree[largest], self.tree[i]
+      else:
+        break
+```
