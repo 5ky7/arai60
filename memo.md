@@ -15,21 +15,20 @@
 class Solution {
 public:
     vector<int> topKFrequent(vector<int>& nums, int k) {
-        std:map<int, int> map_num_appear; // mapの要素は{スコア, 登場回数}
+        std:map<int, int> score_to_num_appear; // mapの要素は{スコア, 登場回数}
         for (int i : nums) {
-            map_num_appear[i]++;
+            score_to_num_appear[i]++;
         }
 
-        std::priority_queue<std::pair<int, int>> pq_num_appear; // 各要素は登場回数でソートされるように{登場回数, スコア}にする
-        for (auto pair : map_num_appear) {
-            std::pair<int, int> pair_transpose = {pair.second, pair.first};
-            pq_num_appear.push(pair_transpose);
+        std::priority_queue<std::pair<int, int>> num_appear; // 各要素は登場回数でソートされるように{登場回数, スコア}にする
+        for (auto pair : score_to_num_appear) {
+            num_appear.push({pair.second, pair.first});
         }
 
         vector<int> k_most_frequent_elements; // 出力用
         for (int i = 0; i < k; i++) {
-            k_most_frequent_elements.push_back(pq_num_appear.top().second);
-            pq_num_appear.pop();
+            k_most_frequent_elements.push_back(num_appear.top().second);
+            num_appear.pop();
         }
 
         return k_most_frequent_elements;
@@ -39,3 +38,42 @@ public:
  
 
 # Step 2
+- `multimap`も一応昇順に整理されているので，`priority_queue`の代わりに使える（以下のコード）．
+  - 登場回数は重複の可能性有りなので`map`ではなく`multimap`で．
+```cpp
+class Solution {
+public:
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        std::map<int, int> score_to_num_appear; // mapの要素は{スコア, 登場回数}
+        for (int i : nums) {
+            score_to_num_appear[i]++;
+        }
+        cout << "step1" << endl;
+
+        std::multimap<int, int, greater<int>> num_appear; // 各要素は登場回数でソートされるように{登場回数, スコア}にする
+        for (auto pair : score_to_num_appear) {
+            num_appear.insert({pair.second, pair.first});
+        }
+        cout << "step2" << endl;
+
+        vector<int> k_most_frequent_elements; // 出力用
+        for (int i = 0; i < k; i++) {
+            cout << "step3 i:" << i << endl;
+            auto p = *num_appear.begin();
+            cout << "step3 i:" << i << endl;
+            k_most_frequent_elements.push_back(p.second);
+            cout << "step3 i:" << i << endl;
+            num_appear.erase(num_appear.begin());
+            cout << "step3 i:" << i << endl;
+        }
+
+        return k_most_frequent_elements;
+    }
+};
+```
+- Quick Selectの話．[これ](https://ja.wikipedia.org/wiki/クイックセレクト)と[これ](https://ja.wikipedia.org/wiki/中央値の中央値)を参照．（後で整理する）
+  - 最悪・平均計算量
+  - 末尾再帰最適化
+  - ピボット選択
+  - マージソートとのプロコン
+ 
