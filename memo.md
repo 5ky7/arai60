@@ -34,7 +34,7 @@
               - ただまだ実行速度に700msくらいの差はあって，leetcodeの実行時間が不正確といえどデータ依存による速度の差はちゃんと反映されているようだ．
       - 大体~10^3msくらいが単純にsubarrayを全て舐めるアルゴリズムの限界？
         - 計算量だけみるとifの条件文でkと等しいかの比較がsubarraysの数，つまりO(n^2)だけ必要になる．定数倍は上記のような工夫で下げられるが，オーダーをこれ以下に抑えるには根本的に別の考え方が必要．
-    - Hash Mapを使った高速化．
+    - Hash Mapを使った高速化（[4つ目のコード](#Code4), accepted）．平均時間計算量O(n)，空間計算量O(n)．
       - [1. Two Sum](https://leetcode.com/problems/two-sum/description/)と同様にhash mapを利用するにはどうすれば良いかを考える．
       - 累積和について[1. Two Sum](https://leetcode.com/problems/two-sum/description/)と同様のことを行えば良い．
       - `++sum_to_count[sum];`は`if`の前には置けない．`k = 0`の時にmapに追加された要素をカウントしておかしいことになる．
