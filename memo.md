@@ -84,7 +84,7 @@ public:
     }
 };
 ```
-### Code 3
+### Code3
 ```cpp
 class Solution {
 public:
@@ -108,7 +108,7 @@ public:
     }
 };
 ```
-### Code 4
+### Code4
 ```cpp
 class Solution {
 public:
