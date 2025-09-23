@@ -1,9 +1,10 @@
+問題:[373.-Find-K-Pairs-with-Smallest-Sums](https://leetcode.com/problems/find-k-pairs-with-smallest-sums)
 # Step 1
-- 先頭から見ていけば良い．（1つ目のコード，Wrong Answer）
+- 先頭から見ていけば良いと考えた（がポインタの進め方が間違っていた）．（1つ目のコード，Wrong Answer）
   - `(nums1[0], nums2[0])`は最小の和を作るペア
   - その次に小さいのは`(nums1[0], nums2[1])`か`(nums1[1], nums2[0])`であるから，小さい方を採用していけば良い
   - よって`index1`と`index2`を用意して，`nums1[index1 + 1] + nums2[index2]`と`nums1[index1] + nums2[index2 + 1]`を比較しては`index1,index2`を進めていけば良い
-- と思ったが，これだと`index1,index2`が今より小さいケースを考えられていない（考え漏らしているものがある）．
+- これだと`index1,index2`が今より小さいケースを考えられていない（考え漏らしているものがある）．
 - 漏れが嫌なら，総当たりでソートすれば良いのでは？-->`priority_queue`の利用．（2つ目のコード，Memory Limit Exceeded）
   - 総当たりだと`nums1, nums2`の長さがクソデカの時にメモリの使用量が爆発する（配列サイズの積＝n^2のオーダー）
 - 回答を見ると，i<jなら全てのkについて`nums1[k] + nums2[i] < nums1[k] + nums2[j]`を利用してメモリ使用量をnのオーダーに抑えたものが．（3つ目のコード）
@@ -172,4 +173,35 @@ class heap_:
         self.tree[i], self.tree[largest] = self.tree[largest], self.tree[i]
       else:
         break
+```
+* ヒープの中身が不自然だったので，自分で比較関数を作ってindexのペアを保持するように変更
+  * ヒープに要素を追加する際，indexのチェックを忘れて一度Wrong Answer(`sorted_index_pairs.push(std::make_pair(p.first, p.second + 1));`のところ）
+```cpp
+class Solution {
+public:
+    vector<vector<int>> kSmallestPairs(vector<int>& nums1, vector<int>& nums2, int k) {
+        // indexのペアを要素にもつpriority_queue用の比較関数
+        // nums1[i] + nums2[j]が小さい(i,j)が先頭に来る．
+        auto comp = [&nums1, &nums2](pair<int,int> i_pair, pair<int, int> j_pair) {
+            return nums1[i_pair.first] + nums2[i_pair.second] > nums1[j_pair.first] + nums2[j_pair.second];
+        };
+
+        std::priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(comp)> sorted_index_pairs(comp);
+        for (int i = 0; i < nums1.size(); ++i) {
+            sorted_index_pairs.push(std::make_pair(i, 0));
+        }
+
+        vector<vector<int>> k_num_pairs_smallest_sum(k);
+        for (int i = 0; i < k; ++i) {
+            auto p = sorted_index_pairs.top();
+            k_num_pairs_smallest_sum[i] = vector<int>{nums1[p.first], nums2[p.second]};
+            sorted_index_pairs.pop();
+            if (p.second < nums2.size() - 1) {
+                sorted_index_pairs.push(std::make_pair(p.first, p.second + 1));
+            }
+        }
+
+        return k_num_pairs_smallest_sum;
+    }
+};
 ```
