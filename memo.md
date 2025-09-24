@@ -44,3 +44,41 @@ public:
 ```
 
 # Step 2
+* `email`から新しい文字列`processed_email`を作る方針から，`email`を直接編集する方針でやってみる．
+  * `@`が出たら残りはそのまま，とか，push_back()は必要ない，とか，処理の数は減らせそう．
+  * 一方で可読性は`processed_email`を用意した方が高いと思う．
+* というわけで実装したが10倍くらい遅くなっている
+  * 考えてみればvectorに対するeraseって消した要素より後ろの要素を一つずつ前に持ってこなきゃいけないわけで，結構時間かかりそうだ．
+    * と思って調べてみたら要素が[POD](https://rinatz.github.io/cpp-book/ch12-02-plain-old-data/)なら一つの要素移動に数サイクル（算術演算と同等），かつキャッシュヒットすれば全体の移動も実質算術演算と同等．よって今回は対して遅くならない（算術演算と同程度）とのこと．
+      * ここはちょっとわからなかった．キャッシュヒットしてても数サイクル * 要素数だけの演算は必要では？
+  * ここは入力されるアドレスの性質（`'+'`の後ろの文字や`'.'`の多寡，domain_nameの平均的な長さ）によるか．
+  * 今回，こっちの方が遅いということはeraseに時間がかかっている（=`'.'`が多い，メアドが長い，など）ということか．
+```cpp
+class Solution {
+public:
+    int numUniqueEmails(vector<string>& emails) {
+        std::set<std::string> unique_email_addresses;
+
+        for (std::string email : emails) {
+            auto email_pointer = email.begin();
+            while (*email_pointer != '@') {
+                if (*email_pointer == '.') {
+                    email.erase(email_pointer);
+                    continue;
+                }
+                if (*email_pointer == '+') {
+                    while (*email_pointer != '@') {
+                        email.erase(email_pointer);
+                    }
+                    break;
+                }
+                ++email_pointer;
+            }
+
+            unique_email_addresses.insert(email);
+        }
+
+        return unique_email_addresses.size();
+    }
+};
+```
