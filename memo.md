@@ -206,3 +206,45 @@ public:
     }
 };
 ```
+
+* 構造体を用意してみる
+* priority queueに`nums1[i] + nums2[0]`を全てのiについて入れるのではなく，`nums1[0] + nums2[0]`を入れて必要に応じて`nums1[i] + nums2[0]`を追加していく
+  * こうすることで**見る必要のない要素*を見る必要がなくなる
+    * 例えばnums1の値がどれも大きく，nums2の値がどれも小さい場合は，実質的に`nums1[(大きい値)] + nums2[(小さい値)]`を見ずに`nums1[(小さい値)] + nums2[(大きい値)]`のみを見ていけば良い
+```cpp
+class Solution {
+private:
+    struct IndexesAndSum {
+        int i1;
+        int i2;
+        int sum;
+    };
+
+    struct Greater {
+        bool operator()(IndexesAndSum a, IndexesAndSum b) const {
+            return a.sum > b.sum;
+        }
+    };
+public:
+    vector<vector<int>> kSmallestPairs(vector<int>& nums1, vector<int>& nums2, int k) {
+        std::priority_queue<IndexesAndSum, vector<IndexesAndSum>, Greater> indexes_and_sum;
+        indexes_and_sum.push({0, 0, nums1[0] + nums2[0]});
+
+        std::vector<std::vector<int>> k_smallest_pairs(k, std::vector<int>(2));
+        for (int i = 0; i < k; ++i) {
+            auto [i1, i2, sum] = indexes_and_sum.top();
+            indexes_and_sum.pop();
+            k_smallest_pairs[i] = {nums1[i1], nums2[i2]};
+
+            if (i1 + 1 < nums1.size()) {
+                indexes_and_sum.push({i1 + 1, i2, nums1[i1 + 1] + nums2[i2]});
+            }
+            if (i1 == 0 && i2 + 1 < nums2.size()) {
+                indexes_and_sum.push({i1, i2 + 1, nums1[i1] + nums2[i2 + 1]});
+            }
+        }
+
+        return k_smallest_pairs;
+    }
+};
+```
