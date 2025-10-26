@@ -1,13 +1,18 @@
 ***思考過程に「なんか変だな」「考えるべきことがズレているな」「そこよりまずあっちを考えないと」などありましたら，是非指摘していただきたいです！***
+
+*以下の文章内ではLeetCodeの計算時間を参考にしている箇所がありますが，実際にはLeetcodeの計測時間は不正確とのことですので，読み飛ばしていただけたらと思います（後にベンチマークでの計測値に置き換える予定です）* 
 # Step 1
 ## とりあえずnaiveに実装
-  - 部分列の和が`k`に等しいかみていく．最悪時間計算量はO(n^3)．空間計算量はO(1)．（以下[1つ目のコード](#Code1)．Time Limit Exceeded）．
-  - 要素数ごとに場合分けして考える：
-  - Example 2において，要素数1のものは[3], 要素数2のものは[1,2]，要素数3のものはなし，
-  - 部分列の取得はspanを使うと可読性と速度の両立が可能（参照であることに注意）
-    - コード書いてみたらポインタを用いるので十分可読性があるのでspanのメリット活かしてないのでspanは使わないことに
-  - Outputはたかだかnumsから2つの要素を選んでくる場合の数なのでintの範囲に収まる．
+  - 全ての部分列を順に見ていって，和が`k`に等しいかみていく．最悪時間計算量はO(n^2)．空間計算量はO(1)．（以下[1つ目のコード](#Code1)．Time Limit Exceeded）．
+  - 要素数ごとに場合分けして考える（要素数をループ変数におく）：
+    - Example 2において，要素数1のものは[3], 要素数2のものは[1,2]，要素数3のものはなし，
+    - 部分列の取得はspanを使うと可読性と速度の両立が可能（参照であることに注意）
+      - コード書いてみたらポインタを用いると十分可読性があるのでspanのメリット活きない．spanは使わないことに．
+  - Outputはたかだかnumsから2つの要素を選んでくる場合の数で，かつ`nums.length <= 2 * 10^4`なので，intの範囲に収まる．
   - コードの読みやすさについて，`j`を要素数にして`nums[i+j]`を足すより，`j = i to nums.size()`にして`nums[j]`を足していく方がわかりやすいかな？
+
+
+
 ## 高速化を考える．
   - 今の実装だとstartからendの和を求めるとき，毎回計算し直しているが，要素数jが増えていくのならjとj+1の計算はほとんど変わらないので無駄がある．
     - そこで`sum`を用意してjが増えるたびに`sum`に追加で足していくようにした（以下[2つ目のコード](#Code2)．Time Limit Exceeded）．最悪時間計算量はO(n^2).空間計算量はO(1)，
@@ -37,8 +42,11 @@
     - Hash Mapを使った高速化（[4つ目のコード](#Code4), accepted）．平均時間計算量O(n)，空間計算量O(n)．
       - [1. Two Sum](https://leetcode.com/problems/two-sum/description/)と同様にhash mapを利用するにはどうすれば良いかを考える．
       - 累積和について[1. Two Sum](https://leetcode.com/problems/two-sum/description/)と同様のことを行えば良い．
-      - `++sum_to_count[sum];`は`if`の前には置けない．`k = 0`の時にmapに追加された要素をカウントしておかしいことになる．
+      - `++sum_to_count[sum];`は`if`の前には置けない．`k = 0`の時にmap`sum_subarray_to_count_subarray`に追加された要素をカウントしておかしいことになる．（一度これでWrong Answerを出してしまった）
+        - 累積和のような「自分自身から何かを除く」時に，「除くものとして自分自身を含めて考えると誤り」なケースと言える．
       - `solution`の増やし方は，累積和中の`sum`の登場回数と結びついているので，setでは実装できない．
+     
+    
 ## 前置インクリメントと後置インクリメントについて．
   - 疑問の発端は「後置の方が（私にとっては）可読性が高いが前置の方が速いよな，どうしようか」
   - 基本前置の方が速いと思っていたが，[そうとは限らない](https://cpp.aquariuscode.com/preincriment-vs-postincriment)らしい．
@@ -113,19 +121,26 @@ public:
 class Solution {
 public:
     int subarraySum(vector<int>& nums, int k) {
-        std::unordered_map<int, int> sum_to_count;
-        sum_to_count.insert({0,1});
-        int sum = 0;
+        map<int, int> sum_subarray_to_count_subarray;
+        sum_subarray_to_count_subarray[0] = 1;
         int solution = 0;
-        for (int i = 0; i < nums.size(); ++i) {
-            sum += nums[i];
-            if (sum_to_count.contains(sum - k)) {
-                solution += sum_to_count[sum - k];
+        int sum = 0;
+        for (int num : nums) {
+            sum += num; // 0からindex of `num`までのsubarrayの和
+            if (sum_subarray_to_count_subarray.contains(sum - k)) {
+                // 和がsum - kになるsubarrayを0からindex of `num`までのsubarray(和はsum)から除いたsubarrayの和はk
+                solution += sum_subarray_to_count_subarray[sum - k];
             }
-            ++sum_to_count[sum];
+            ++sum_subarray_to_count_subarray[sum];
         }
         return solution;
     }
 };
 ```
 # Step 2
+* [和がkになるsubarrayを列挙する問題](https://discord.com/channels/1084280443945353267/1233603535862628432/1252232545056063548)とみる捉え方もある．最後にlenを取れば良い．
+  * 今回の問題に正解を与えるだけなら[Code4](#Code4)と同じ考え方．
+    * というか，まず自然な発想として「和がkになるsubarrayを列挙する問題」として考えた後に，必要なもののみを残すには？と考えると[Code4](#Code4)になるとも言える．
+  * どの値を保持するか，というのは常に考えておきたい．
+    * 可読性はもちろん，実用上スケーリングした時にどういう影響が出そうか，なども判断基準になる（[cf.](https://github.com/Hurukawa2121/leetcode/pull/16#discussion_r1898332261)）
+* わからない時にはわかるものに分割して考える．
