@@ -1,18 +1,21 @@
+*以下の文章内ではLeetCodeの計算時間を参考にしている箇所がありますが，実際にはLeetcodeの計測時間は不正確とのことですので，読み飛ばしていただけたらと思います（後にベンチマークでの計測値に置き換える予定です）* 
+
 # Step 1
 - 無向グラフの連結成分分解だからDFSかBFSやれば良い．
   - 探索中の座標を突っ込むコンテナをキューにすればBFS，スタックにすればDFSになる．
   - 研究でDFSを使いそうな雰囲気なので，練習がてらDFSでやってみる．
-- プロトタイプはこんな感じだが，コンパイルエラー．`std::set`には`top()`なんてない，と怒られてしまったので`begin()`を用いて要素を取ってくるよう変更した
-- しかしテストランでWrong Answer. テストケースの出力を見ると出力の`num_components`がマスの数（4*5のgridなら`num_components == 20`）になっている．
+- とりあえず実装してみたが（[Code1](#Code1)）テストランでWrong Answer. テストケースの出力を見ると最終出力に対応する`num_components`がマスの数（4*5のgridなら`num_components == 20`）になっている．
   - `grid`の各成分は`string`型だったので，`grid[i][j]`を用いた条件文が期待通り動いていないことに気づく．
     - char型はシングルクオーテーションを用いることに注意（ダブルクオーテーションだと文字列リテラル(const char*)型になる．）
 - 最終的に通ったのが以下のコード．
-  - しかし所要時間が134msで，正答者平均が26msくらいであることと比べると明らかに遅すぎる．LeetCodeのRuntimeは正確でないとはいえ改善の余地がありそう．
+  - しかし所要時間が134msで，正答者平均が26msくらいであることと比べると明らかに遅すぎる．
   - `SearchAdjacentPoints()`の`adjacent_diff`を`set`から`vector`にしたら82msくらいに．変えてみた理由としては，
       - 全部舐めるだけならsetよりvectorの方が早そう（所属判定とか要素の変更とかをしないなら，という意味）
         - setは木だから構築にも時間かかりそう
-        - 舐めるの自体は，結局木は配列の形で保持するから変わらないかな．
+        - 舐める速さ自体は，結局木も配列の形で保持している変わらないかな．
   - stack(DFS)じゃなくてqueue(BFS)にしても速さは変わらないはずだよなあ.
+ 
+### Code1
 ```cpp
 class Solution {
 public:
@@ -36,7 +39,7 @@ public:
             points_unvisited.erase(p_);
 
             while (!points_searching.empty()) {
-                pair<int, int> p = points_searching.top();
+                pair<int, int> p = points_searching.begin();
                 points_searching.pop();
                 SearchAdjacentPoints(grid, p, points_unvisited, points_searching);
             }
