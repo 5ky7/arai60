@@ -1,11 +1,13 @@
 # Step 1
 - どう見たって200. Number of Islandsの亜種なので，その時のコードに面積カウント機能をつければ良い
 - どう見たって200. Number of Islandsの亜種なのに，今回は`grid`の各成分が`char`じゃなくて`int`になってるって罠でしかない．
-- しかしそれを修正してもWrong Answer（以下のコード）．
+- しかしそれを修正してもWrong Answer（[Code1](#Code1)）．
   - Outputが正答6に対し11とか．
   - DFS自体は間違っていないはずなのでコードを読み直してみる．
   - `maxAreaOfIsland()`本体（`points_searching`から点が削除されるとき）でも`SearchAdjacentPoints()`（`points_searching`に点が追加されるとき）でも`++area_;`をしているが，これだと2重に増やしている．
     - `points_searching`から削除されるときに`++area_;`の方がわかりやすいと思ったのでそっちを残して他方を削除したらAccepted.
+   
+### Code1
 ```cpp
 class Solution {
 public:
@@ -70,3 +72,71 @@ private:
 
 
 # Step 2
+* 数ヶ月ぶりに何も見ず解き直した([Code2](#Code2))
+
+### Code2
+```cpp
+class Solution {
+private:
+    const array<pair<int, int>, 4> adjacent_ = {{
+        {1, 0}, {-1, 0}, {0, 1}, {0, -1}
+    }};
+
+    bool IsIsland(const vector<vector<int>>& grid, int i, int j) {
+        int num_rows = grid.size();
+        int num_columns = grid[0].size();
+
+        if (!(0 <= i && i < num_rows)) {
+            return false;
+        }
+        if (!(0 <= j && j < num_columns)) {
+            return false;
+        }
+        if (grid[i][j] == 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    void Traverse(const vector<vector<int>>& grid, int i, int j, vector<vector<int>>& visited, int& area_size) {
+        if (visited[i][j] == 1) {
+            return;
+        }
+        visited[i][j] = 1;
+        ++area_size;
+
+        for (auto [di, dj] : adjacent_) {
+            if (!IsIsland(grid, i + di, j + dj)) {
+                continue;
+            }
+            
+            Traverse(grid, i + di, j + dj, visited, area_size);
+        }
+    }
+
+public:
+    int maxAreaOfIsland(vector<vector<int>>& grid) {
+        int num_rows = grid.size();
+        int num_columns = grid[0].size();
+
+        vector<vector<int>> visited(num_rows, vector<int>(num_columns, 0));
+        int max_area_size = 0;
+        for (int i = 0; i < num_rows; ++i) {
+            for (int j = 0; j < num_columns; ++j) {
+                if (grid[i][j] == 0 || visited[i][j] == 1) {
+                    continue;
+                }
+                
+                int current_area_size = 0;
+                Traverse(grid, i, j, visited, current_area_size);
+                if (max_area_size < current_area_size) {
+                    max_area_size = current_area_size;
+                }
+            }
+        }
+
+        return max_area_size;
+    }
+};
+```
