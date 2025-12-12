@@ -38,16 +38,16 @@ private:
 # Step 2
 * Step1から時間が経ったのでとりあえず解き直してみる([Code3](#Code3)．所要時間4分くらい．
 * 再帰をループで書いているものがあったので自分もやってみる（[Code4](#Code4)）．所要時間9分．
- * popし忘れて一敗．
- * `traversing_node`を`deque<TreeNode*>`として宣言して書き進めて，「あれ，深さ取得できないじゃん」となって`struct node_and_depth`を定義して完成
-  * 多分「あれ，深さ取得できないじゃん」となる前に最初から「深さ持っておかなきゃ」と思えるようにはある程度経験が必要そう
- * BFSでやっているものもある
-  * [Code4](#Code4)の`push_front()`を`push_back()`に置き換えれば良い
-  * BFSの場合は`max_depth = std::max(max_depth, depth);`は常に更新される
-   * `while(!~.empty())`を`while(true)`にして，このループの末尾に`if (~.empty) {max_depth = depth; break;}`を入れても良いかも
- * [Nullチェックはpop直後にもできる](https://github.com/Apo-Matchbox/LeetCode_Practice/pull/29/files#r2596191790)という発想は自分にはなかった．
-  * 「チェック→追加→取得→処理」，「追加→取得→チェック→処理」の違い．結局処理の前にチェックが入れば良い．
- * （BFSの時に）深さを管理したい場合は，[異なる深さのノードを異なる場所に格納する](https://github.com/Apo-Matchbox/LeetCode_Practice/pull/29/files#r2596188103)とわかりやすい．([Code5](#Code5))
+  * popし忘れて一敗．
+  * `traversing_node`を`deque<TreeNode*>`として宣言して書き進めて，「あれ，深さ取得できないじゃん」となって`struct node_and_depth`を定義して完成
+    * 多分「あれ，深さ取得できないじゃん」となる前に最初から「深さ持っておかなきゃ」と思えるようにはある程度経験が必要そう
+  * BFSでやっているものもある
+    * [Code4](#Code4)の`push_front()`を`push_back()`に置き換えれば良い
+    * BFSの場合は`max_depth = std::max(max_depth, depth);`は常に更新される
+    * `while(!~.empty())`を`while(true)`にして，このループの末尾に`if (~.empty) {max_depth = depth; break;}`を入れても良いかも
+  * [Nullチェックはpop直後にもできる](https://github.com/Apo-Matchbox/LeetCode_Practice/pull/29/files#r2596191790)という発想は自分にはなかった．
+    * 「チェック→追加→取得→処理」，「追加→取得→チェック→処理」の違い．結局処理の前にチェックが入れば良い．
+  * （BFSの時に）深さを管理したい場合は，[異なる深さのノードを異なる場所に格納する](https://github.com/Apo-Matchbox/LeetCode_Practice/pull/29/files#r2596188103)とわかりやすい．([Code5](#Code5))
 
 ### Code3
 ```cpp
