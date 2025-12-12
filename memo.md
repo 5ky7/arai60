@@ -1,5 +1,5 @@
 # Step 1
-* Maximum Depthのmaxをminにしただけ，と思って書いたがWA（[Code1](#Code1）
+* Maximum Depthのmaxをminにしただけ，と思って書いたがWA（[Code1](#Code1)）
   * これだと，入力`node`に対して，leftがnullptrでrightに実ノードを持つとき，leftから0が帰って来て`GetDepth(node)`の返り値が1になる
   * しかし本来返り値になるべきは"`node`から葉までの距離"であるから，leftもrightもnullptrの時のみ`GetDepth(node)`の返り値が1になって欲しい
 * ということで修正したのが[Code2](#Code2)
@@ -80,4 +80,78 @@ private:
 };
 ```
 # Step 2
+* 最初に解いてから時間が経ったので解き直してみる([Code4](#Code4)）
+ * 所要時間6分．
+ * やっぱり`node->left`と`node->right`で非対称なのが気に食わないが良い案が浮かばない．
 * 再帰をループで書いてみる
+ * ループで書こうとしたところで，BFSにすれば最初に葉を見つけた瞬間に終われば良いと気づく（[Code5](#Code5)）
+
+### Code4
+```cpp
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if (!root) {
+            return 0;
+        }
+        return GetMinDepth(root);
+    }
+private:
+    int GetMinDepth(TreeNode* root) {
+        if (!root->left && !root->right) {
+            return 1;
+        }
+
+        int min_child_depth = INT_MAX;
+        if (root->left) {
+            min_child_depth = GetMinDepth(root->left);
+        }
+        if (root->right) {
+            min_child_depth = std::min(min_child_depth, GetMinDepth(root->right));
+        }
+        
+        return min_child_depth + 1;
+    }
+};
+```
+
+### Code5
+```cpp
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if (!root) {
+            return 0;
+        }
+        std::deque<TreeNode*> found_nodes;
+        found_nodes.push_back(root);
+        int depth = 0;
+        while (!found_nodes.empty()) {
+            ++depth;
+            bool leaf_exist = false;
+            std::deque<TreeNode*> next_level_nodes;
+            while (!found_nodes.empty()) {
+                TreeNode* node = found_nodes.front();
+                found_nodes.pop_front();
+                if (!node->left && !node->right) {
+                    // 葉を見つけたら終了
+                    leaf_exist = true;
+                    break;
+                }
+                if (node->left) {
+                    next_level_nodes.push_back(node->left);
+                }
+                if (node->right) {
+                    next_level_nodes.push_back(node->right);
+                }
+            }
+            if (leaf_exist) {
+                // 葉を見つけたら終了
+                break;
+            }
+            found_nodes = std::move(next_level_nodes);
+        }
+        return depth;
+    }
+};
+```
