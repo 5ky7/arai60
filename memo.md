@@ -82,7 +82,6 @@ private:
 # Step 2
 * 最初に解いてから時間が経ったので解き直してみる([Code4](#Code4)）
   * 所要時間6分．
-  * やっぱり`node->left`と`node->right`で非対称なのが気に食わないが良い案が浮かばない．
 * 再帰をループで書いてみる
   * ループで書こうとしたところで，BFSにすれば最初に葉を見つけた瞬間に終われば良いと気づく（[Code5](#Code5)）
 * [下から集める（関数の返り値で上に伝える）か，上から渡す（関数の引数で下に伝える）か](https://discord.com/channels/1084280443945353267/1196472827457589338/1237988315781664770)という観点があったので，上から渡す方法でもやってみる([Code6](#Code6))．
@@ -106,7 +105,7 @@ private:
 
         int min_child_depth = INT_MAX;
         if (root->left) {
-            min_child_depth = GetMinDepth(root->left);
+            min_child_depth = std::min(min_child_depth, GetMinDepth(root->left));
         }
         if (root->right) {
             min_child_depth = std::min(min_child_depth, GetMinDepth(root->right));
