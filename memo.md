@@ -33,3 +33,64 @@ private:
 ```
 
 # Step 2
+* 例によってStep1から時間があいてしまったので解き直す([Code3](#Code3))．
+  * 所要時間7分．
+  * 書いてみて，処理の優先順位がStep1と違うことに気づいた．
+    * Step2では「簡単に処理できるケースを先に処理する」というイメージになっている．
+* 非破壊的に書いてみる([Code4](#Code4))．
+  * `return nullptr`を使いたいので再帰関数の返り値はあくまで`TreeNode*`型
+  * `node->val`を足し合わせる必要がないなら元のnodeをそのまま使う
+  * 足し合わせる必要があるときは`new`で関数を抜けてもdeleteされないようにヒープ上に確保してこれをreturnする．
+ 
+### Code3
+```cpp
+class Solution {
+public:
+    TreeNode* mergeTrees(TreeNode* root1, TreeNode* root2) {
+        return MergeTreesHelper(root1, root2);
+    }
+private:
+    TreeNode* MergeTreesHelper(TreeNode* root1, TreeNode* root2) {
+        if (!root1 && !root2) {
+            return nullptr;
+        }
+        if (!root1) {
+            return root2;
+        }
+        if (!root2) {
+            return root1;
+        }
+        root1->val += root2->val;
+        root1->left = MergeTreesHelper(root1->left, root2->left);
+        root1->right = MergeTreesHelper(root1->right, root2->right);
+        return root1;
+    }
+};
+```
+### Code4
+```cpp
+class Solution {
+public:
+    TreeNode* mergeTrees(TreeNode* root1, TreeNode* root2) {
+        return MergeTreesHelper(root1, root2);
+    }
+private:
+    TreeNode* MergeTreesHelper(TreeNode* root1, TreeNode* root2) {
+        if (!root1 && !root2) {
+            return nullptr;
+        }
+        if (!root1) {
+            return root2;
+        }
+        if (!root2) {
+            return root1;
+        }
+
+        // root1もroot2も存在するなら新しいrootを作成して返す
+        TreeNode* new_root = new TreeNode(root1->val + root2->val);
+        new_root->left = MergeTreesHelper(root1->left, root2->left);
+        new_root->right = MergeTreesHelper(root1->right, root2->right);
+        return new_root;
+    }
+};
+```
