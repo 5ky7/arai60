@@ -85,6 +85,8 @@ private:
   * やっぱり`node->left`と`node->right`で非対称なのが気に食わないが良い案が浮かばない．
 * 再帰をループで書いてみる
   * ループで書こうとしたところで，BFSにすれば最初に葉を見つけた瞬間に終われば良いと気づく（[Code5](#Code5)）
+* [下から集める（関数の返り値で上に伝える）か，上から渡す（関数の引数で下に伝える）か](https://discord.com/channels/1084280443945353267/1196472827457589338/1237988315781664770)という観点があったので，上から渡す方法でもやってみる([Code6](#Code6))．
+  * `node->left`, `node->right`について同じコードを書いていたので，[一つにまとめてみた](https://github.com/Yoshiki-Iwasa/Arai60/pull/25#discussion_r1665958206)．
 
 ### Code4
 ```cpp
@@ -152,6 +154,34 @@ public:
             found_nodes = std::move(next_level_nodes);
         }
         return depth;
+    }
+};
+```
+
+### Code6
+```cpp
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if (!root) {
+            return 0;
+        }
+        int min_depth = INT_MAX;
+        MinDepthHelper(root, 1, min_depth);
+        return min_depth;
+    }
+private:
+    void MinDepthHelper(const TreeNode* node, const int depth, int& min_depth) {
+        if (!node->left && !node->right) {
+            min_depth = std::min(depth, min_depth);
+            return;
+        }
+
+        for (const TreeNode* child : {node->left, node->right}) {
+            if (child) {
+                MinDepthHelper(child, depth + 1, min_depth);
+            }
+        }
     }
 };
 ```
