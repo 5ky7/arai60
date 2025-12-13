@@ -34,7 +34,12 @@ private:
   * while文の中でノードを作る=newするタイミングをどうするかで2パターンある
     * frontiersにとりあえずlower, upper, nullptrのポインタを入れといて，そのポインタの番が来たら，ノード（ = 「ポインタの中身の中身」）を，lowerとupperから作る（今回のコードで採用）
     * frontiersに入れる前にlowerとupperからノードを作る．その後，その対応するlowerとupperとノードのポインタのポインタをfrontiersに入れる
+  * と思ったが，上のやつ後者の方は[メモリリークの危険がある](https://github.com/irohafternoon/LeetCode/pull/27/files/6d5bfca367a0487c71117a848d66ffd4c6036136#r2060734803)
+    * とりあえず作ってからnullptrに置き換えるとnewしたやつがdeleteされずに残る．よってnullptrに置き換えるまえにデリートする．
   * `Info`に関しては，いい名前が思い浮かばなかった．どうせ構造化束縛で取り出すのでメンバ変数名から内容物がわかればあんまり長くする必要もないとも思ったので，シンプルに済ませた．
+  * `*ptr_to_node`がたくさん登場したのでこれを`node`でおいたが，`node`は`TreeNode*&`であることに注意
+    * `TreeNode* node = *ptr_to_node`とすると`*ptr_to_node`のコピーが作成されて`node`に入る．
+    * `node`を書き換えても`*ptr_to_node`は変わらない．
 
 
 ### Code2
@@ -75,15 +80,16 @@ public:
         while (!frontiers.empty()) {
             auto [lower, upper, ptr_to_node] = frontiers.front();
             frontiers.pop_front();
+            TreeNode*& node = *ptr_to_node;
             if (lower > upper) {
-                *ptr_to_node = nullptr;
+                node = nullptr;
                 continue;
             }
             int center = (lower + upper) / 2;
-            *ptr_to_node = new TreeNode(nums[center]);
+            node = new TreeNode(nums[center]);
 
-            frontiers.push_back({lower, center - 1, &((*ptr_to_node)->left)});
-            frontiers.push_back({center + 1, upper, &((*ptr_to_node)->right)});
+            frontiers.push_back({lower, center - 1, &(node->left)});
+            frontiers.push_back({center + 1, upper, &(node->right)});
         }
 
         return new_root;
