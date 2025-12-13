@@ -41,6 +41,8 @@ private:
   * `return nullptr`を使いたいので再帰関数の返り値はあくまで`TreeNode*`型
   * `node->val`を足し合わせる必要がないなら元のnodeをそのまま使う
   * 足し合わせる必要があるときは`new`で関数を抜けてもdeleteされないようにヒープ上に確保してこれをreturnする．
+* [Code4](#Code4)の「元のnodeをそのまま使う」のところは，「ここに分岐で至った時点でそれ以上書き換えることがない（＝元のノードは非破壊）」という認識をしていたが，合成後のノード全てを新しく生成するパターンの実装が多くみられたのでそれもやってみる([Code5](#Code5))
+ * `const`とか`constexpr`とかも含めて型になるので，`const TreeNode*`に`TreeNode*`を入れようとするとキャストが起こることに注意．
  
 ### Code3
 ```cpp
@@ -75,7 +77,7 @@ public:
         return MergeTreesHelper(root1, root2);
     }
 private:
-    TreeNode* MergeTreesHelper(TreeNode* root1, TreeNode* root2) {
+    TreeNode* MergeTreesHelper(const TreeNode* root1, const TreeNode* root2) {
         if (!root1 && !root2) {
             return nullptr;
         }
@@ -87,6 +89,35 @@ private:
         }
 
         // root1もroot2も存在するなら新しいrootを作成して返す
+        TreeNode* new_root = new TreeNode(root1->val + root2->val);
+        new_root->left = MergeTreesHelper(root1->left, root2->left);
+        new_root->right = MergeTreesHelper(root1->right, root2->right);
+        return new_root;
+    }
+};
+```
+
+### Code5
+```cpp
+class Solution {
+public:
+    TreeNode* mergeTrees(TreeNode* root1, TreeNode* root2) {
+        return MergeTreesHelper(root1, root2);
+    }
+private:
+    const TreeNode dummy_ = TreeNode();
+
+    TreeNode* MergeTreesHelper(const TreeNode* root1, const TreeNode* root2) {
+        if (!root1 && !root2) {
+            return nullptr;
+        }
+        if (!root1) {
+            root1 = &dummy_;
+        }
+        if (!root2) {
+            root2 = &dummy_;
+        }
+
         TreeNode* new_root = new TreeNode(root1->val + root2->val);
         new_root->left = MergeTreesHelper(root1->left, root2->left);
         new_root->right = MergeTreesHelper(root1->right, root2->right);
