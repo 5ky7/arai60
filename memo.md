@@ -44,3 +44,45 @@ public:
 };
 ```
 # Step 2
+* Step1から時間が空いたので解き直してみる．[Code2](#Code2)．所要時間17分
+ * キューを2つ用意すればStep1のようにdepthを保持する必要なく素直にlevel order traversalができる．
+ * キューに入れるのは`TreeNode*`だけど出力の`vector`に入っているのは`int`なので注意．単純にコンストラクタ呼び出しで構築できないので別に関数を用意した．
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> result;
+        if (!root) {
+            return result;
+        }
+        std::deque<TreeNode*> frontiers;
+        std::deque<TreeNode*> next_frontiers;
+        next_frontiers.push_back(root);
+        while (!next_frontiers.empty()) {
+            frontiers = std::move(next_frontiers);
+            next_frontiers.clear();
+            result.push_back(GetValsFromNodes(frontiers));
+            
+            while (!frontiers.empty()) {
+                TreeNode* node = frontiers.front();
+                frontiers.pop_front();
+                for (TreeNode* child : {node->left, node->right}) {
+                    if (child) {
+                        next_frontiers.push_back(child);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+private:
+    vector<int> GetValsFromNodes(const std::deque<TreeNode*> nodes) {
+        vector<int> result;
+        for (TreeNode* node : nodes) {
+            result.push_back(node->val);
+        }
+        return result;
+    }
+};
+```
