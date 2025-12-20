@@ -6,6 +6,9 @@
   * 直前のループで扱ったノードと，今扱っているノードの深さが違ったら，levelが変わったと判定できる
   * levelが変わったらそのlevel用の空のvector<int>を，return用のvector<vector<int>>にpush_back
   * ノードの探索が終了したらそのノードのlevelに対応するvector<int>にnode->valをpush_back
+* [Code1](#Code1)について，`current_depth != previous_depth`の時の処理は[whileの方が読み手の負担を減らせる](https://discord.com/channels/1084280443945353267/1200089668901937312/1211248049884499988)
+  * `while (current_depth != nodes_list.size())`にしておくと，この処理を抜けると常に`current_depth == nodes_list.size()`であることを明示したことになる．
+  * そう考えると`previous_depth`は不要．
 ### Code1
 ```cpp
 class Solution {
@@ -50,6 +53,11 @@ public:
   * また，出力にnullptrは入れないので「とりあえずキューに追加してから処理の直前でnullptrを弾く」はできない
     * と思ったけどキューから出力用ベクターを得る関数を自前で作ってるから別にできる．
     * と思ったけど`next_frontiers`にnullptrだけ入っていたら最終出力に`[]`が追加される．これ弾くにはいちいち出力用ベクターに追加する前に，frontierの中身を舐めるチェックが必要でめんどくさそう．
+  * 一番外側のwhileループは，`while (true)`か，`while (!next_frontiers.empty())`か
+    * `while (true)`にして，ループの最初に`if (next_frontiers.empty()) return result`で弾く方法もある
+    * 両方書いてみたが，個人的にはどっちでも良い気がした．
+
+    
 
 ### Code2
 ```cpp
