@@ -96,6 +96,7 @@ $$
 * ということでメモ化再帰（トップダウン）でも書いてみる．[Code4](#Code4)．所要時間6分．
   * メモ化してあるので計算量はO(n)
   * 書いてから気づいたが，`num_paint_ways[n - 2] == -1`を先に処理すると再帰呼び出しのスタック数が最大でも`n / 2`になってややお得．（`[n - 1]`から処理すると最大`n`になる）
+* どうせ2つ前しか使わないのなら[その2つを持っておけば配列はいらない](https://github.com/colorbox/leetcode/pull/44/files#diff-aff5ec372dbeba0ce683a17e880e734278d5d6f03d11852b0016efe8e68c2ab5)．[Code5](#Code5)．
 
 ### Code4
 ```cpp
@@ -126,6 +127,35 @@ private:
         }
 
         return num_paint_ways[n - 1] * (k - 1) + num_paint_ways[n - 2] * (k - 1);
+    }
+};
+```
+
+### Code5
+```cpp
+class Solution {
+public:
+    int numWays(int n, int k) {
+        if (n <= 0) {
+            return 0;
+        }
+        if (n == 1) {
+            return k;
+        }
+        if (n == 2) {
+            return k * k;
+        }
+        
+        int prev_prev_ways = k;
+        int prev_ways = k * k;
+        int num_ways;
+        for (int num_fence = 3; num_fence <= n; ++num_fence) {
+            num_ways = 0;
+            num_ways = prev_ways * (k - 1) + prev_prev_ways * (k - 1);
+            prev_prev_ways = prev_ways;
+            prev_ways = num_ways;
+        }
+        return num_ways;
     }
 };
 ```
