@@ -2,7 +2,7 @@
 * いつだか解いた時のものが[Code1](#Code1)．
 * 時間が経ったので解き直してみる．[Code2](#Code2)．間に用事が入ったため所要時間不明（30分くらい？）
   * 額の大きいコインから順に引いていけばいいじゃん，と思って[Code2](#Code2)を書いたがWrong Answer.
-    * これだと`coins = [3, 998]`, `amount = 999`の時に`-1`を返してしまう．
+    * これだと`coins = [3, 998]`, `amount = 999`の時に`-1`を返してしまう．（本来は`3`から`999`を作れるので`333`が正しい返り値）
   * これはボトムアップで最小枚数を計算していく方が良いと思い書いたのが[Code3](#Code3)．
     * ループ変数`i`に何も考えず`int`を用いたため，`if (i + coin <= amount)`の`i + coin`でオーバーフロー．`long longに変更`．
       * 条件文の`if (i <= amount - coin)`への変更も考えたが，可読性を考えるとindexとして`i + coin`が`amount`を超えない，という意味が分かりにくくなるため`i`の数値型を変更することにした．
@@ -123,3 +123,36 @@ public:
 ```
 
 # Step 2
+* [「配るDP」「貰うDP」](https://github.com/nittoco/leetcode/pull/38#discussion_r1845466688)という表現方法があるらしい．わかりやすい．
+  * Step1のコードは「配るDP」になっている．貰うDPもやってみようとしたが，時間がかかりすぎているので一旦後回しにする
+    * 再帰的＋メモ化で実装したが，再帰を用いて求める際に最終的に`amount == 0`のケースに到達しないと，その再帰は値を返せないことに注意（ここでよくわからなくなってしまった）
+* `min_num_coins`という一つの変数に”最低何枚で作れるか”と”そもそも作れるのか”の2つの意味を持たせているので，[これを分離させる](https://github.com/Yoshiki-Iwasa/Arai60/pull/54#discussion_r1739985190)のもあり．[Code5](#Code5)．
+  * 今回のケース程度の規模のコードではまだ恩恵は感じにくいが，大規模化した時とかは良さそう
+  * 「配るDP」（再帰＋メモ化）でも使える？？
+
+### Code5
+```cpp
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> min_num_coins(amount + 1, INT_MAX);
+        vector<int> is_constructable(amount + 1, 0); // 0: not constructable, 1: constructable
+        is_constructable[0] = 1;
+        min_num_coins[0] = 0;
+
+        for (long long i = 0; i < min_num_coins.size(); ++i) {
+            if (is_constructable[i] == 0) {
+                continue;
+            }
+            for (int coin : coins) {
+                if (i + coin < min_num_coins.size()) {
+                    min_num_coins[i + coin] = std::min(min_num_coins[i + coin], min_num_coins[i] + 1);
+                    is_constructable[i + coin] = 1;
+                }
+            }
+        }
+
+        return (is_constructable[amount] == 0) ? -1 : min_num_coins[amount];
+    }
+};
+```
