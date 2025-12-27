@@ -58,11 +58,21 @@ private:
 ```
 # Step 2
 * `isValidBSTHelper`の引数に値の上界と下界を与えるためにTreeNode*を渡しているが，これを無理やり数値にすると[Code3](#Code3)になる．
-  * ただし`node->val`の値の範囲を元にマジックナンバー的に上界と下界の初期値を与えているので
+  * ただし`node->val`の値の範囲を元にマジックナンバー的に上界と下界の初期値を与えていることに注意．
 * [通りがけ順の巡回](https://discord.com/channels/1084280443945353267/1192736784354918470/1234120299008491581)を利用する．[Code4](#Code4)．
   * 通りがけ順にvectorにnode->valを格納していって，最後に`std::is_sorted()`を利用したが，これだと`strictly less than`でなく等号成立も許可するのでダメだった．自前で判定関数を用意した．
 * [BFSの利用](https://github.com/olsen-blue/Arai60/pull/28)もあったのでやってみる．[Code5](#Code5)．
   * なんか変に難しく考えてたが，「各nodeについてBST条件を満たすか」をチェックするだけだから全てのnodeをtraverseできればBFSでもDFSでも実装可能．
+* [Generatorの利用](https://github.com/fhiyo/leetcode/pull/30)．[Code6](#Code6)
+  * ジェネレータとは？
+    * 通常の関数：呼び出される --> 最後まで実行 --> 値を返して終了
+    * ジェネレータ：呼び出される --> 値を返して一時停止 --> 再度呼ばれるとそこから再開
+    * `co_yield`で値を返して一時停止，`co-return`で完全終了
+  * 今回で言うと，[通りがけ順の巡回](#Code4)と組み合わせることで，空間計算量を定数化できる（配列に`node->val`を格納せず，逐一`node->val`を比較できる）．
+  * `std::ranges::elements_of()`の役割：
+    * ジェネレータ`InorderValues`は入れ子構造になっている
+    * 入れ子として中にある`InorderValues`が`co_yield`するたびに，その値を（一つずつ）取得する．
+    * それを親ジェネレータの`co_yield`の対象とする．
 
 
 ### Code3
@@ -173,5 +183,35 @@ private:
         TreeNode* upper_bound;
         TreeNode* lower_bound;
     };
+};
+```
+
+### Code6
+```cpp
+#include <generator>
+
+class Solution {
+public:
+    bool isValidBST(TreeNode* root) {
+        long long previous_val = std::numeric_limits<long long>::min();
+        for (long long current_val : InorderValues(root)) {
+            if (current_val <= previous_val) {
+                return false;
+            }
+            previous_val = current_val;
+        }
+        return true;
+    }
+
+private:
+    std::generator<long long> InorderValues(TreeNode* node) {
+        if (!node) {
+            co_return;
+        }
+
+        co_yield std::ranges::elements_of(InorderValues(node->left));
+        co_yield static_cast<long long>(node->val);
+        co_yield std::ranges::elements_of(InorderValues(node->right));
+    }
 };
 ```
