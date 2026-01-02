@@ -68,11 +68,15 @@ private:
     * 通常の関数：呼び出される --> 最後まで実行 --> 値を返して終了
     * ジェネレータ：呼び出される --> 値を返して一時停止 --> 再度呼ばれるとそこから再開
     * `co_yield`で値を返して一時停止，`co-return`で完全終了
-  * 今回で言うと，[通りがけ順の巡回](#Code4)と組み合わせることで，空間計算量を定数化できる（配列に`node->val`を格納せず，逐一`node->val`を比較できる）．
+  * 今回で言うと，[通りがけ順の巡回](#Code4)と組み合わせることで，~空間計算量を定数化できる~（配列に`node->val`を格納せず，逐一`node->val`を比較できる）．
+    * 状態を一時的に保存する，かつ，入れ子構造になっているので，最悪O(n)の空間計算量が必要．
   * `std::ranges::elements_of()`の役割：
     * ジェネレータ`InorderValues`は入れ子構造になっている
     * 入れ子として中にある`InorderValues`が`co_yield`するたびに，その値を（一つずつ）取得する．
     * それを親ジェネレータの`co_yield`の対象とする．
+* [Morris Traversal](https://discord.com/channels/1084280443945353267/1200089668901937312/1213356258103525407)の利用．
+  * [Code7](#Code7)を書いたがエラーが出た．バグはなさそうなんだがなあと思っていたが，どうやら入力を破壊的に変更したがために，木構造のデストラクタでエラーが起きているようだ．
+  * というわけで，early returnでfalseを返すことはできない．最後までtraverseしてからtrue, falseを返すように修正．[Code8](#Code8)
 
 
 ### Code3
@@ -212,6 +216,148 @@ private:
         co_yield std::ranges::elements_of(InorderValues(node->left));
         co_yield static_cast<long long>(node->val);
         co_yield std::ranges::elements_of(InorderValues(node->right));
+    }
+};
+```
+
+### Code7
+```cpp
+class Solution {
+public:
+    bool isValidBST(TreeNode* root) {
+        if (!root) {
+            return true;
+        }
+
+        TreeNode* current_node = root;
+        TreeNode* previous_node_inorder = nullptr;
+        while (current_node) {
+            auto [predecessor_in_left_subtree, temporary_link] = FindTheInorderPredecessor(current_node);
+            if (!predecessor_in_left_subtree) {
+                // leftにpredecessorがない，つまり現時点でcurrent_nodeが先頭．
+                // rightを探索していく．
+                cout << current_node->val << " ";
+                if (previous_node_inorder && previous_node_inorder->val >= current_node->val) {
+                    return false;
+                }
+                previous_node_inorder = current_node;
+                current_node = current_node->right;
+                continue;
+            }
+            if (!temporary_link) {
+                // current_nodeは1回目の訪問．left以下未探索．
+                // temporary linkを設定してleftを探索していく．
+                predecessor_in_left_subtree->right = current_node;
+                current_node = current_node->left;
+                continue;
+            }
+            // current_nodeは2回目の訪問．つまりleft以下探索終了．
+            // つまり現時点でcurrent_nodeが先頭．
+            // temporary linkを切断してrightを探索していく．
+            predecessor_in_left_subtree->right = nullptr;
+            cout << current_node->val << " ";
+            if (previous_node_inorder && previous_node_inorder->val >= current_node->val) {
+                return false;
+            }
+            previous_node_inorder = current_node;
+            current_node = current_node->right;
+        }
+
+        return true;
+    }
+
+private:
+    std::pair<TreeNode*, bool> FindTheInorderPredecessor(TreeNode* node) {
+        if (!node->left) {
+            return {nullptr, false};
+        }
+
+        TreeNode* predecessor = node->left;
+        while (predecessor->right) {
+            // temporary linkの有無を確認，
+            if (predecessor->right == node) {
+                return {predecessor, true};
+            }
+            predecessor = predecessor->right;
+        }
+        return {predecessor, false};
+    }
+};
+```
+
+### Code8
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    bool isValidBST(TreeNode* root) {
+        if (!root) {
+            return true;
+        }
+
+        TreeNode* current_node = root;
+        TreeNode* previous_node_inorder = nullptr;
+        bool flag = true;
+        while (current_node) {
+            auto [predecessor_in_left_subtree, temporary_link] = FindTheInorderPredecessor(current_node);
+            if (!predecessor_in_left_subtree) {
+                // leftにpredecessorがない，つまり現時点でcurrent_nodeが先頭．
+                // rightを探索していく．
+                cout << current_node->val << " ";
+                if (previous_node_inorder && previous_node_inorder->val >= current_node->val) {
+                    flag = false;
+                }
+                previous_node_inorder = current_node;
+                current_node = current_node->right;
+                continue;
+            }
+            if (!temporary_link) {
+                // current_nodeは1回目の訪問．left以下未探索．
+                // temporary linkを設定してleftを探索していく．
+                predecessor_in_left_subtree->right = current_node;
+                current_node = current_node->left;
+                continue;
+            }
+            // current_nodeは2回目の訪問．つまりleft以下探索終了．
+            // つまり現時点でcurrent_nodeが先頭．
+            // temporary linkを切断してrightを探索していく．
+            predecessor_in_left_subtree->right = nullptr;
+            cout << current_node->val << " ";
+            if (previous_node_inorder && previous_node_inorder->val >= current_node->val) {
+                flag = false;
+            }
+            previous_node_inorder = current_node;
+            current_node = current_node->right;
+        }
+
+        return flag;
+    }
+
+private:
+    std::pair<TreeNode*, bool> FindTheInorderPredecessor(TreeNode* node) {
+        if (!node->left) {
+            return {nullptr, false};
+        }
+
+        TreeNode* predecessor = node->left;
+        while (predecessor->right) {
+            // temporary linkの有無を確認，
+            if (predecessor->right == node) {
+                return {predecessor, true};
+            }
+            predecessor = predecessor->right;
+        }
+        return {predecessor, false};
     }
 };
 ```
