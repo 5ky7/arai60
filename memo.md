@@ -80,7 +80,7 @@ private:
 
 # Step 2
 * [こちら](https://github.com/kazukiii/leetcode/pull/30/files#diff-06efd0304bbfd575bfe41bfea0314658b1edecf67e00e23997ed8354f2e210d8)を参考に，`preorder`,`inorder`を構築し直すことで`buildTree()`を直接再帰関数化しようとしたが，`preorder`などを作り直すたびに空間計算量が無駄に嵩むのでspanを用いたのが[Code2](#Code2)．
-* [こちら](https://github.com/kazukiii/leetcode/pull/30#discussion_r1821506570)を参考にしたのが[Code3](#Code3)．Step1で中断した考え方（「親に戻る」，より正確には「親を特定する」方針）に近い．
+* [preorderの順に構築する方法](https://github.com/kazukiii/leetcode/pull/30#discussion_r1821506570)を参考にしたのが[Code3](#Code3)．Step1で中断した考え方（「親に戻る」，より正確には「親を特定する」方針）に近い．
   * 子が確定していないノードからなるスタック`nodes_may_have_a_child`を用意して親がその中にいるはず，という考え方をする．
   * 子が確定したら（つまりleftとrightを見終わったら）スタックから取り出す．
 * [inorderの順で構築していく](https://github.com/kazukiii/leetcode/pull/30/files/ab2dbb435e41621f4b7e17de01e8afcf984af434#r1821628634)方法を参考に実装してみたのが[Code4](#Code4)だが，理解しきれていない．
