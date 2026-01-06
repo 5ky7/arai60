@@ -84,6 +84,9 @@ private:
   * 子が確定していないノードからなるスタック`nodes_may_have_a_child`を用意して親がその中にいるはず，という考え方をする．
   * 子が確定したら（つまりleftとrightを見終わったら）スタックから取り出す．
 * [inorderの順で構築していく](https://github.com/kazukiii/leetcode/pull/30/files/ab2dbb435e41621f4b7e17de01e8afcf984af434#r1821628634)方法を参考に実装してみたのが[Code4](#Code4)だが，理解しきれていない．
+  * `gather_descendants`の`while`ループ内の動作で，「`node->left`以下のノードのrightが全て確定する」と言える理由がわかっていない．
+    * whileループを繰り返すに従って，`unchained_node`はどんどん祖先側にいく．同時に`unchained_node->right = child`の瞬間に`unchained_node`はrightも確定する．
+    * しかし本当に木構造の左下のノードから順にrightが確定していくと言えるのか？ここが理解しきれていない．
 
 
 
@@ -186,27 +189,24 @@ public:
 
         stack<TreeNode*> nodes_not_finalized_right;
         auto gather_descendants = [&](int node_position) {
+            // gather_descendantsの呼び出しによって，node->left以下のノードのrightが全て確定しなければならない．
+            // まだ確定していないnode->left以下のノードはnodes_not_finalized_rightに入っている．
             TreeNode* child = nullptr;
             while (!nodes_not_finalized_right.empty()) {
-                TreeNode* back = nodes_not_finalized_right.top();
-                // inorderではbackがnode (!= child) より先に来る（スタックなので）
-                // あとはpreorderでnode -> backの順（nodeのleft subtreeにback）か，
-                // あるいはpreorderでback -> nodeの順（backのright subtreeにnode）か，のいずれか．
-                if (values_to_position_preorder[back->val] < node_position) {
-                    // preorderでback -> nodeの順の時，backのright subtreeにnodeが含まれる．
+                TreeNode* unchained_node = nodes_not_finalized_right.top();
+                if (values_to_position_preorder[unchained_node->val] < node_position) {
                     break;
                 }
-                // preorderでnode -> backの順の時
                 nodes_not_finalized_right.pop();
-                back->right = child;
-                child = back;
+                unchained_node->right = child;
+                child = unchained_node;
             }
             return child;
         };
         for (int node_val : inorder) {
             TreeNode* node = new TreeNode(node_val);
             int node_position = values_to_position_preorder[node->val];
-            node->left = gather_descendants(node_position);
+            node->left = gather_descendants(node_position); 
             nodes_not_finalized_right.emplace(node);
         }
         return gather_descendants(numeric_limits<int>::min());
