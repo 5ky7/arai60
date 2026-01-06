@@ -1,3 +1,4 @@
+[105. Construct Binary Tree from Preorder and Inorder Traversal](https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/description/)
 # Step 1
 * 少し考えてみたが，コードにできなかった．以下回答を見るまでの思考過程．
   * 手元で5個のノードからなる例，3個のノードからなる例を考えてみた
