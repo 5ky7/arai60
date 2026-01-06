@@ -82,6 +82,7 @@ private:
 * [こちら](https://github.com/kazukiii/leetcode/pull/30#discussion_r1821506570)を参考にしたのが[Code3](#Code3)．Step1で中断した考え方（「親に戻る」，より正確には「親を特定する」方針）に近い．
   * 子が確定していないノードからなるスタック`nodes_may_have_a_child`を用意して親がその中にいるはず，という考え方をする．
   * 子が確定したら（つまりleftとrightを見終わったら）スタックから取り出す．
+* [inorderの順で構築していく](https://github.com/kazukiii/leetcode/pull/30/files/ab2dbb435e41621f4b7e17de01e8afcf984af434#r1821628634)方法を参考に実装してみたのが[Code4](#Code4)だが，理解しきれていない．
 
 
 
@@ -123,17 +124,6 @@ private:
 
 ### Code3
 ```cpp
-/**
- * Definition for a binary tree node.
- * struct TreeNode {
- *     int val;
- *     TreeNode *left;
- *     TreeNode *right;
- *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
- *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
- *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
- * };
- */
 class Solution {
 public:
     TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
@@ -179,6 +169,46 @@ public:
         }
 
         return dummy.left;
+    }
+};
+```
+
+### Code4
+```cpp
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        map<int, int> values_to_position_preorder;
+        for (int i = 0; i < preorder.size();++i) {
+            values_to_position_preorder[preorder[i]] = i;
+        }
+
+        stack<TreeNode*> nodes_not_finalized_right;
+        auto gather_descendants = [&](int node_position) {
+            TreeNode* child = nullptr;
+            while (!nodes_not_finalized_right.empty()) {
+                TreeNode* back = nodes_not_finalized_right.top();
+                // inorderではbackがnode (!= child) より先に来る（スタックなので）
+                // あとはpreorderでnode -> backの順（nodeのleft subtreeにback）か，
+                // あるいはpreorderでback -> nodeの順（backのright subtreeにnode）か，のいずれか．
+                if (values_to_position_preorder[back->val] < node_position) {
+                    // preorderでback -> nodeの順の時，backのright subtreeにnodeが含まれる．
+                    break;
+                }
+                // preorderでnode -> backの順の時
+                nodes_not_finalized_right.pop();
+                back->right = child;
+                child = back;
+            }
+            return child;
+        };
+        for (int node_val : inorder) {
+            TreeNode* node = new TreeNode(node_val);
+            int node_position = values_to_position_preorder[node->val];
+            node->left = gather_descendants(node_position);
+            nodes_not_finalized_right.emplace(node);
+        }
+        return gather_descendants(numeric_limits<int>::min());
     }
 };
 ```
