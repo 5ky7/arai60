@@ -78,3 +78,107 @@ private:
 ```
 
 # Step 2
+* [こちら](https://github.com/kazukiii/leetcode/pull/30/files#diff-06efd0304bbfd575bfe41bfea0314658b1edecf67e00e23997ed8354f2e210d8)を参考に，`preorder`,`inorder`を構築し直すことで`buildTree()`を直接再帰関数化しようとしたが，`preorder`などを作り直すたびに空間計算量が無駄に嵩むのでspanを用いたのが[Code2](#Code2)．
+* [こちら](https://github.com/kazukiii/leetcode/pull/30#discussion_r1821506570)を参考にしたのが[Code3](#Code3)．Step1で中断した考え方（「親に戻る」，より正確には「親を特定する」方針）に近い．
+  * 子が確定していないノードからなるスタック`nodes_may_have_a_child`を用意して親がその中にいるはず，という考え方をする．
+  * 子が確定したら（つまりleftとrightを見終わったら）スタックから取り出す．
+
+
+
+### Code2
+```cpp
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        span<const int> preorder_span(preorder);
+        span<const int> inorder_span(inorder);
+        return buildTreeHelper(preorder_span, inorder_span);
+    }
+
+private:
+    TreeNode* buildTreeHelper(span<const int> preorder, span<const int> inorder) {
+        if (preorder.empty() || inorder.empty()) {
+            return nullptr;
+        }
+
+        int root_val = preorder[0];
+        TreeNode* root = new TreeNode(root_val);
+
+        auto it_root_val_inorder = std::find(inorder.begin(), inorder.end(), root_val);
+        int num_nodes_left_subtree = distance(inorder.begin(), it_root_val_inorder);
+
+        span<const int> inorder_left_subtree = inorder.subspan(0, num_nodes_left_subtree);
+        span<const int> inorder_right_subtree = inorder.subspan(num_nodes_left_subtree + 1);
+
+        span<const int> preorder_left_subtree = preorder.subspan(1, num_nodes_left_subtree);
+        span<const int> preorder_right_subtree = preorder.subspan(num_nodes_left_subtree + 1);
+
+        root->left = buildTreeHelper(preorder_left_subtree, inorder_left_subtree);
+        root->right = buildTreeHelper(preorder_right_subtree, inorder_right_subtree);
+        
+        return root;
+    }
+};
+```
+
+### Code3
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        map<int, int> values_to_index_inorder;
+        for (int i = 0; i < inorder.size(); ++i) {
+            values_to_index_inorder[inorder[i]] = i;
+        }
+
+        TreeNode dummy;
+        stack<tuple<TreeNode*, int, int>> nodes_may_have_a_child;
+        // `nodes_may_have_a_child` contains all nodes that their children have not confirmed.
+        // the second and third values represent the range of index in `inorder` that corresponds to the right subtree of the node.
+        nodes_may_have_a_child.emplace(&dummy, numeric_limits<int>::max(), numeric_limits<int>::max());
+        for (int node_val : preorder) {
+            TreeNode* node = new TreeNode(node_val); 
+            // The problem is: which is the parent of `node`?
+            // Case1 : `node` is the child of the top node of the stack.
+            //  Case1-1 : `node` is the *left* child of the top node of the stack.
+            //  Case1-2 : `node` is the *right* child of the top node of the stack.
+            // Case2 : `node`is not the child of the top node of the stack.
+            int node_index_inorder = values_to_index_inorder[node_val];
+            auto [parent, first_right_subtree, last_right_subtree] = nodes_may_have_a_child.top();
+            // `parent` is the top node of the stack.
+            if (node_index_inorder < first_right_subtree) {
+                // Case1-1
+                parent->left = node;
+                nodes_may_have_a_child.emplace(node, node_index_inorder + 1, first_right_subtree);
+                continue;
+            }
+            while (true) {
+                auto [parent, first_right_subtree, last_right_subtree] = nodes_may_have_a_child.top();
+                if (node_index_inorder < last_right_subtree) {
+                    // Case1-2
+                    parent->right = node;
+                    nodes_may_have_a_child.pop(); // Children of `parent` have confirmed. 
+                    nodes_may_have_a_child.emplace(node, node_index_inorder, last_right_subtree);
+                    break;
+                }
+                // Case2 : the parent of `node` is the node added to the stack before `parent`
+                // So pop the stack and check the next (that is, older) `parent` by while loop.
+                nodes_may_have_a_child.pop(); // Children of `parent` have confirmed. 
+            }
+        }
+
+        return dummy.left;
+    }
+};
+```
