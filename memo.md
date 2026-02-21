@@ -72,6 +72,17 @@ private:
 * [Code2](#Code2)は時間計算量O(n^2)としたが，[二分探索でO(NlogN)にできる](https://github.com/haniwachann/leetcode/pull/5#discussion_r1859480859)．[Code3](#Code3)
   * この選択肢は頭の中に思い浮かべておきたかった．「探す」の選択肢として「特有の構造（今回なら単調増加性）を利用するか，総当たりか」の分岐を持っておきたい．
 * セグメントツリーについて．
+  * [このコード](https://github.com/hayashi-ay/leetcode/pull/27/changes#diff-b7fbb0dce1473afc0264185268f1a1ef6d682a3a8c997d43bc8bdd636a66ce4aR207)をみるも，何をやっているのか理解できなかった．コードを書いてみて([Code4(#Code4)])，手で挙動を確認してみたが，いまいち理解しきれていない．
+    * セグ木が，配列のとある範囲における最大値を効率的に返すことはわかった．
+    * セグ木の中に保持する配列は`nums`（あるいはそれを座標圧縮したもの）ではないこともわかった．
+    * numsを座標圧縮した上で，numsの各要素`num`に対して`[0,num]`の範囲を調べているのもわかったが，なぜこれを調べるのかはわからない．
+      * 座標圧縮したおかげで調べる範囲が無駄に広くなるのを防いでいそう？
+    * セグ木のアップデートのたびに最大長がセグ木に保持されていってそうなのはわかったが，更新位置が`i`になるのはよくわからない．というかセグ木が何をどんな論理で保持しているのかもわからない．
+    * セグ木に保持しているのは何だろうか？
+      * `nums`の要素数と同じ個数の実質的なデータ領域があり，残りは効率的に最大値を求めるためのデータ用の領域
+      * `nums`の要素が全て相異なるとする．`nums`の要素`nums[i] == num`に注目した時，`nums[0]`から`nums[i]`までを使って組み立てられる部分列の最長を返している？
+      * しかしどういうロジックなのかがわからない．セグ木の中にはもはや`nums`の順番は保持されていないのに，部分列は`nums`の要素の順番が大事な役割を果たしそう．なぜセグ木から部分列の要素が取り出せる？
+  * [こっち](https://github.com/thonda28/leetcode/pull/16/changes#diff-5d85004121fdaf34abe9af172f266e7f57f39e2165ac80e3ecbd849d1831c141R12)はセグ木のサイズを2の冪乗にしたバージョン．セグ機の実装自体は多少わかりやすいかもだが，私の疑問「なぜセグ木によってその目的を達成できるのか」はまだわかっていない．
 
 
 ### Code3
@@ -101,5 +112,87 @@ private:
         *it = new_num;
         return;
     }
+};
+```
+```cpp
+
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+class Solution {
+ public:
+  int lengthOfLIS(vector<int>& nums) {
+    vector<int> compressed_nums = Compress(nums);
+    SegmentTree tree = SegmentTree(compressed_nums);
+
+    for (int num : compressed_nums) {
+      int best = tree.GetMax(0, num);
+      tree.Update(num, best + 1);
+    }
+
+    return tree.GetMax(
+        0, *std::max_element(compressed_nums.begin(), compressed_nums.end()) + 1);
+  }
+
+  class SegmentTree {
+   private:
+    int size_;
+    vector<int> tree_and_nums_;
+
+   public:
+    SegmentTree(const vector<int>& nums)
+        : size_(*std::max_element(nums.begin(), nums.end()) + 1),
+          tree_and_nums_(2 * size_, 0) {}
+
+    int GetMax(int left, int right) {
+      int result = 0;
+      left += size_;
+      right += size_;
+      while (left < right) {
+        if (left % 2 == 1) {
+          result = std::max(result, tree_and_nums_[left]);
+          ++left;
+        }
+        if (right % 2 == 1) {
+          --right;
+          result = std::max(result, tree_and_nums_[right]);
+        }
+        left /= 2;
+        right /= 2;
+      }
+      return result;
+    };
+
+    void Update(int pos, int value) {
+      pos += size_;
+      while (pos > 0) {
+        if (tree_and_nums_[pos] >= value) {
+          return;
+        }
+        tree_and_nums_[pos] = value;
+        pos /= 2;
+      }
+    };
+  };
+
+ private:
+  vector<int> Compress(const vector<int>& nums) {
+    vector<int> sorted_unique_nums = nums;
+    std::sort(sorted_unique_nums.begin(), sorted_unique_nums.end());
+    sorted_unique_nums.erase(
+        unique(sorted_unique_nums.begin(), sorted_unique_nums.end()),
+        sorted_unique_nums.end());
+
+    vector<int> compressed_nums(nums.size());
+    for (int i = 0; i < nums.size(); ++i) {
+      auto rank_ith_num = lower_bound(sorted_unique_nums.begin(),
+                                      sorted_unique_nums.end(), nums[i]) -
+                          sorted_unique_nums.begin();
+      compressed_nums[i] = static_cast<int>(rank_ith_num);
+    }
+    return compressed_nums;
+  }
 };
 ```
