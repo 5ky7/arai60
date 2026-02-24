@@ -10,6 +10,7 @@
     - ということは，一つ小さいサイズを参照するには，問題を変えて，「`nums[i]`を最後に含む部分列で最大のもの」を，「`nums[i-1]`を最後に含む部分列で和が最大のものと，`nums[i-1]`を含まないもの（＝空配列）」を比べれば良い．
     - この発想で書いたのが[Code3](#Code3)．
       - 時間計算量O(n), 空間計算量O(n)．
+      - 空間計算量は最大値のみ保持しておけばO(1)に減らせる．減らした後のものをKadaneのアルゴリズムと呼ぶ．
 
 ### Code1
 ```cpp
@@ -77,3 +78,34 @@ public:
 };
 ```
 # Step 2
+- [O(n)解法の別の発想](https://discord.com/channels/1084280443945353267/1206101582861697046/1207518775851876362)を参考に書いたのが[Code4](#Code4)．
+  - こっちは空間計算量がO(1)．
+    - と思ったが，[Code3](#Code3)も`std::vector<int> max_subarray_with_itself`の代わりに最大値だけ保持しておけば空間計算量O(1)に減らせるね．
+  - 言われてみれば確かにワンパスでいける．「今の累積和」，「それまでの累積和の最小値」があれば確かに「それまでの最大部分列の和」が求められて，一つ次のループで必要な「次の累積和」と「（範囲を一つ伸ばした）それまでの累積和の最小値」はそれぞれ次のループ内，今のループの最後で求められる．
+  - 発想の違いはどこだろう？部分列の構築に注目（Step1の[Code3](#Code3)）するのか，数値に注目するか（[Code4](#Code4)）の違い？（そうではない気がする）
+  - [こう考えた](https://discord.com/channels/1084280443945353267/1206101582861697046/1208414507735453747)らしい．
+    - 選択肢を増やすこと，そのために今思いつく方法をいじることである面で（例えば計算量，素直さなど）よりよくできないか考えること，が大事そう．
+    - その上で選択肢を比較検討すること．
+
+### Code4
+```cpp
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        if (nums.empty()) {
+            return 0;
+        }
+
+        int cumulative_sum = 0;
+        int min_cumulative_sum = 0;
+        int max_sum_of_subarray = nums[0]; 
+        for (int num : nums) {
+            cumulative_sum += num;
+            max_sum_of_subarray = std::max(max_sum_of_subarray, cumulative_sum - min_cumulative_sum);
+            min_cumulative_sum = std::min(min_cumulative_sum, cumulative_sum);
+        }
+
+        return max_sum_of_subarray;
+    }
+};
+```
