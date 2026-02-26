@@ -89,9 +89,6 @@ public:
         if (nums.empty()) {
             return 0;
         }
-        if (nums.size() <= 2) {
-            return *max_element(nums.begin(), nums.end());
-        }
 
         int prev_prev_max = 0;
         int prev_max = 0;
