@@ -69,9 +69,17 @@ public:
         - 答えが3つ飛ばしの部分列 -> 存在しない（3つ飛ばすなら真ん中のやつを追加できる）
 
 # Step 2
-この問題も，[2つ前までさえ保持していれば良い](https://github.com/dxxsxsxkx/leetcode/pull/35/changes#diff-e037c6bae3811b36d8b1ffc2cb0170188d49c4ce3907166d1be2642e7493f85fR31)からテーブルはいらない．ということで書いたのが[Code3](#Code3)．まあ普通に配列を使った方が読みやすくはある．空間計算量も$`O(n)`$だし．`nums`じゃなくて，何らかのデータの配列が与えられて各要素がめちゃくちゃ重い，とかだとテーブル無しverの出番かも．
+[Code3](#Code3)．修正点は以下の通り．
+- 変数名の修正．[参考](https://github.com/dxxsxsxkx/leetcode/pull/35/changes#diff-37bde376c719d629667a55f34ac8dfed6b5a2d774d005fcb49bafb0a7410a00fR10)．
 
-#### Code3
+---
+この問題も，[2つ前までさえ保持していれば良い](https://github.com/dxxsxsxkx/leetcode/pull/35/changes#diff-e037c6bae3811b36d8b1ffc2cb0170188d49c4ce3907166d1be2642e7493f85fR31)からテーブルはいらない．ということで書いたのが[Code4](#Code4)．なお，`prev_prev_max`,`prev_max`の初期値は[DPのコード](#Code2)と異なり[0で良い](https://github.com/dxxsxsxkx/leetcode/pull/35/changes#r2835907619)．こうするとループも`i=1`から回せて綺麗．
+
+なお，[max_amountのスコープはfor文の中のみで良い](https://github.com/dxxsxsxkx/leetcode/pull/35/changes#r2835909356)が，`return prev_max`より`return max_amount`の方がわかりやすいと感じたのでこちらを採用．
+
+まあ普通に配列を使った方が読みやすくはある．空間計算量も$`O(n)`$でボトルネックにはなりにくそうだし．`nums`じゃなくて，何らかのデータの配列が与えられて各要素がめちゃくちゃ重い，とかだとテーブル無しverの出番かも．
+
+#### Code4
 ```cpp
 #include <vector>
 
@@ -85,10 +93,10 @@ public:
             return *max_element(nums.begin(), nums.end());
         }
 
-        int prev_prev_max = nums[0];
-        int prev_max = nums[1];
+        int prev_prev_max = 0;
+        int prev_max = 0;
         int max_amount = 0;
-        for (int ith_house = 3; ith_house <= nums.size(); ++ith_house) {
+        for (int ith_house = 1; ith_house <= nums.size(); ++ith_house) {
             max_amount = std::max(prev_max, prev_prev_max + nums[ith_house - 1]);
             prev_prev_max = std::max(prev_prev_max, prev_max);
             prev_max = std::max(prev_max, max_amount);
@@ -100,9 +108,9 @@ public:
 ```
 
 ---
-再帰verも書いてみる．[Code4](#Code4)．`std::max_element(first, last);`の走査範囲は`[fisrt, last)`なので`last`は含まないことに注意．
+再帰verも書いてみる．[Code5](#Code5)．`std::max_element(first, last);`の走査範囲は`[fisrt, last)`なので`last`は含まないことに注意．
 
-#### Code4
+#### Code5
 ```cpp
 #include <vector>
 
