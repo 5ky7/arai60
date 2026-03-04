@@ -81,3 +81,39 @@ private:
 ```
 
 # Step 2
+- `span`のコンストラクタは`std::span<const int> nums_span_without_first(nums.begin(), nums.end() - 1)`のようにイテレータで範囲指定も可能．[cf](https://github.com/potrue/leetcode/pull/36/changes#diff-d3cedbf7511b9e154887733e0eb21d3ff29647725d96d4c901b62042cd7a32b7R34)
+    - ここで`nums.end() - 1`を見て「空配列だとエラー吐きそうだな」と思えるようになりたい．
+
+---
+
+ラムダ式のメリット・デメリット．[cf1](https://github.com/potrue/leetcode/pull/36/changes#r2253909474)，[cf2](https://ttsuki.github.io/styleguide/cppguide.ja.html#Lambda_expressions)．
+
+メリットは，
+- 関数オブジェクトを作成するときに便利．特に引数として無名関数を渡したいときに引数に直接書き込める．
+- キャプチャが便利．メンバ関数化すると引数が冗長になる恐れがある．
+    - 具体的に上記2つが役に立つ例として，並列計算フレームワークで計算ロジックをネストさせたい場合が挙げられる．
+```cpp
+std::vector<double> a(n), b(n), c(n);
+
+parallel_for(0, n, [&](int i) {
+    c[i] = a[i] + b[i]; // キャプチャが便利．
+});
+```
+```cpp
+parallel_for(0, N, [&](int i) {
+    parallel_for(0, N, [&](int j) { // 無名関数をネストさせられる
+        double sum = 0;
+        for (int k = 0; k < N; k++) {
+            sum += A[i][k] * B[k][j];
+        }
+        C[i][j] = sum;
+    });
+});
+```
+
+デメリットは，
+- 長くなると目線の上下動が大きくなり，読むのに疲れる
+- キャプチャされたポインタと関数内ローカル変数の関係付けによるダングリングポインタの危険性
+    - ダングリングポインタ: 無効になったメモリ領域を指すポインタ
+    - キャプチャは実のところ変数宣言であることに注意する．型は明示されないが，実質的にautoであると考えて良い．
+- 関数名がないと，ロジックが複雑になると理解しにくい．
