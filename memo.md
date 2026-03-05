@@ -177,6 +177,64 @@ scanlについて．
 
 その帰結として，[ワンパス](https://discord.com/channels/1084280443945353267/1192728121644945439/1218818241636339722)で書くということができる．関数の連続適用なので．これをさらに潰す（必要なものだけ保持する）と[Code2](#Code2)になるわけだ．
 
+C++には`std:inclusive_scan()`があるのでこれを用いて実装してみた([Code6](#Code6))が，あんまり綺麗じゃないように感じる．もっと良い書き方があるのか，あるいは私が関数型になれていないだけか．
+
+###### Code6
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        if (prices.empty()) {
+            return 0;
+        }
+
+        std::vector<pair<int,int>> min_price_and_max_profit(prices.size());
+        std::inclusive_scan(prices.begin(),
+                            prices.end(),
+                            min_price_and_max_profit.begin(),
+                            [](pair<int, int> acc, int price) -> pair<int, int>{
+                                auto [min_price_so_far, max_profit_so_far] = acc;
+                                int max_profit = std::max(max_profit_so_far, price - min_price_so_far);
+                                int min_price = std::min(min_price_so_far, price);
+                                return {min_price, max_profit};
+                            },
+                            pair<int,int>(std::numeric_limits<int>::max(),0));
+        
+        return min_price_and_max_profit.back().second;
+    }
+};
+```
+
+複数の処理（`min_price`の取得，`max_profit`の取得など）をあえて分けて書き直してみた．[Code7](#Code7)．こっちの方が読みやすいかなー，微妙な感じ．
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        if (prices.empty()) {
+            return 0;
+        }
+
+        std::vector<int> min_prices(prices.size());
+        std::inclusive_scan(prices.begin(),
+                            prices.end(),
+                            min_prices.begin(),
+                            [](int min_so_far, int price) -> int{
+                                return std::min(min_so_far, price);
+                            });
+        std::vector<int> max_profit_so_far(prices.size());
+        std::transform(prices.begin(),
+                        prices.end(),
+                        min_prices.begin(),
+                        max_profit_so_far.begin(),
+                        [](int price, int min_price) -> int{
+                            return price - min_price;
+                        });
+
+        return *std::max_element(max_profit_so_far.begin(), max_profit_so_far.end());
+    }
+};
+```
+
 ---
 
 [この辺](https://discord.com/channels/1084280443945353267/1262688866326941718/1345967955233607701)を参考に計算時間を求めてみる．[Code2](#Code2)を例に．
