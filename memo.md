@@ -156,6 +156,35 @@ public:
   - `[5,2,4,1,7,6,1]`
  
 ---
+他の人のレビューを見て修正
+- [Code2](#Code2)で[`min_price`を更新したら`max_return`の更新は起きない](https://github.com/kunimomo/arai60/pull/3/changes#r2616695770)のでcontinueするべき.
+    - `std::max(),std::min()`での更新だとcontinueできないけど，せっかくifを使っているし．
+    - というか，for内部でminとmaxどっちを先に更新しても良いが，minが更新された時にはmaxは更新されないということに対応している．
+        - 言い方を変えると，同時刻で売り買いすると利益は0だが，利益の最小値は0という保証があるということ
+            - min -> maxの順の更新は同時刻での売り買いを許す
+            - max -> minの順の更新は同時刻での売り買いを許さない（前の時刻で売ったものを今の時刻で買うというロジック）
+        - 同時刻での売り買いを許す方が，行動の空間としては広いので，最大値はより大きくなりうるが，「同時刻で売り買いすると利益は0だが，利益の最小値は0」なので結局最大値は同時刻売り買いを許さない場合と等しくなるということ．
+- `prices[i] - min_price`は繰り返し現れる＆ロジックに重要な意味を持つので変数でおいてみる．
+- `for (int price : prices)`の方が適切そう．
+
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int min_price = std::numeric_limits<int>::max();
+        int max_profit = 0;
+        for (int price : prices) {
+            int current_max_profit = price - min_price;
+            max_profit = std::max(max_profit, current_max_profit);
+            min_price = std::min(min_price, price);
+        }
+        return max_profit;
+    }
+};
+```
+
+---
+
 
 scanlについて．
 - [関数型っぽい](https://discord.com/channels/1084280443945353267/1233603535862628432/1290661484057329685)の意味
@@ -234,6 +263,7 @@ public:
     }
 };
 ```
+[zipでまとめる](https://github.com/5103246/LeetCode_Arai60/pull/35/changes#diff-8698033d6638bc01ec89a5e3fb98d5d045d26ae61e9e8f9e73f7824611fd89bcR65)と見やすいかも．C++23から．
 
 ---
 
@@ -260,3 +290,6 @@ $$
 $$
 
 あれ，なんか遅すぎないか？
+
+---
+[動的計画](https://github.com/kunimomo/arai60/pull/3/changes#r2616699293)でやるのも面白そう．
