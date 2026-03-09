@@ -90,7 +90,9 @@ public:
 };
 ```
 
-いつだか解いた時のが以下の[PastCode](#PastCode)から続く3つのコード．
+---
+
+いつだか解いた時のが以下の[PastCode](#PastCode)から続く3つのコード（個人用のメモに近いので，レビューはしていただかなくても大丈夫です）．1つ目はTLE．
 #### PastCode
 ```cpp
 // Brute Force with Dynamic programing
@@ -164,3 +166,29 @@ public:
 
 
 # Step 2
+C++には[adjacent_find()](https://cpprefjp.github.io/reference/algorithm/adjacent_find.html)があり，これを使って[PastCode](#PastCode)の2つ目のコード(谷で買って山で売る)を書き直せる．[Code3](#Code3)．
+- `if (valley < prices.end() && peak == prices.end()) {`の処理を一度書き忘れた．
+    - `prices`の最後の値が直前の値より大きく，その前に谷がある時にはその谷で買って最後に売らねばならないが，この分岐がないと`peak = prices.end()`となるためこの売りによる利益が加算されない．
+
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int total_return = 0;
+        auto valley = std::adjacent_find(prices.begin(), prices.end(), std::less<int>());
+        auto peak = std::adjacent_find(valley, prices.end(), std::greater<int>());
+
+        while (valley < prices.end() && peak < prices.end()) {
+            total_return += *peak - *valley;
+            valley = std::adjacent_find(peak, prices.end(), std::less<int>());
+            peak = std::adjacent_find(valley, prices.end(), std::greater<int>());
+        }
+
+        if (valley < prices.end() && peak == prices.end()) {
+            total_return += prices.back() - *valley;
+        }
+
+        return total_return;
+    }
+};
+```
