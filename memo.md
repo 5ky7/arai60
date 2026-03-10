@@ -6,7 +6,7 @@
 - 持ってる時に次の時刻で下がるなら売れば良い（∵少なくとも今売れば次の時刻に売るより利益が生み出せる．もしそのあともっと上がるなら，今より低い次の時刻で買ってから上がった後に売れば良い）
 
 ---
-これって冷静に考えると全ての価格が上がる直前で買って上がった直後に売る（価格が上がった時だけ積分する）ことだから，以下の[Code2](#Code2)のように書き直せる．
+これって冷静に考えると全ての価格が上がる直前で買って上がった直後に売る（価格が上がった時だけ積分する）ことだから，以下の[Code2](#Code2)のように書き直せる．ただし実務上は，売り買いのたびに手数料がかかるので，売り買いの数はできるだけ抑えたほうが良さそう．
 
 このコードにして気づいたが，Code1もCode2も`if (prices.size() <= 1)`の例外処理はなくても動く．が，入れた方がわかりやすいし読んだ人が「本当にいらないの？」と考える時間も無駄なので入れておく．
 
@@ -170,6 +170,7 @@ C++には[adjacent_find()](https://cpprefjp.github.io/reference/algorithm/adjace
 - `if (valley < prices.end() && peak == prices.end()) {`の処理を一度書き忘れた．
     - `prices`の最後の値が直前の値より大きく，その前に谷がある時にはその谷で買って最後に売らねばならないが，この分岐がないと`peak = prices.end()`となるためこの売りによる利益が加算されない．
 
+#### Code3
 ```cpp
 class Solution {
 public:
@@ -189,6 +190,29 @@ public:
         }
 
         return total_return;
+    }
+};
+```
+
+---
+
+[株を保持している時としていない時の最大値を変数におき，更新していく](https://github.com/5103246/LeetCode_Arai60/pull/36/changes#diff-e969ee840191df78b19cebeeeaa55e602e2790d373ffd1f7b1c0c96d1a9a98e4R72)手法がおもしろかった．[Code4](#Code4)
+
+#### Code4
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int max_return_with_stock = -prices.front();     // 現時刻で株を持っている時のキャッシュの最大値
+        int max_return_without_stock = 0; // 現時刻で株を持っていない時のキャッシュの最大値
+        // 株を持つ時には株価分キャッシュを支払う．
+
+        for (int price : prices) {
+            max_return_with_stock = std::max(max_return_with_stock, max_return_without_stock - price);
+            max_return_without_stock = std::max(max_return_without_stock, max_return_with_stock + price);
+        }
+
+        return max_return_without_stock; // 常に`max_return_with_stock <= max_return_without_stock`なので
     }
 };
 ```
