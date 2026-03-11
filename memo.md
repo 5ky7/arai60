@@ -1,6 +1,18 @@
 # Step 1
 過去に解いてから時間が経ってので解き直してみる．再帰的にできそうなのでとりあえず書いてみて([Code1](#Code1)，その後でメモ化を試みる([Code2](#Code2))．
 
+メモ化を試みた際，単にメモを用意するだけではTLEだった．効率よくメモに書き込む必要があった．ここでの効率は，`wordDict`から文字数について貪欲に選ぶと言うことに対応していた．つまり，できるだけ早く`is_constructable_from`に書き込みをするべきで，それにはできるだけ早く末尾に近い（再帰呼び出しが起こらないことに対応）`start_pos`を引数にもつ`CheckConstructability()`の呼び出しに到達する必要がある．そのためには`start_pos`が大きくなる順に，つまり文字数が大きい順に`wordDict`から取り出すべきと言うことになる．
+
+このTLEは事前に見積もれるようになりたい．最悪のケースでは
+- 入力:
+    - `s = 'a' * 299 + 'b'`
+    - `wordDict = {"a", "aa", ... , 'a'*20, (あとはaを使わずbを含まない適当な文字列を1980個)}`
+
+この時，wordDictから取り出す順番を工夫しないと，300回の再帰呼び出しがあり，各呼び出しで2000回wordDictから1要素を取り出すループを回すことになる．要するに最悪で`s.size() * wordDict.size()`だけかかるわけで，$`6 \times 10^5`$ほどのステップを要する．
+
+この辺まで考えて，wordDictをhashmap的なものに入れて，`s`を走査してはhashmap lookupを行えばO(s.size())でできるんじゃないかと思った．[Code3](#Code3)．しかし冷静に考えればhashmapでヒットしたあと再帰呼び出しするんだから$`O(n^2)`$だった．一応まあメモ化してCode2と同様に$`O(n)`$に落としてみた([Code4](#Code4))．結局[Code2](#Code2)と似た感じに．違いはwordDictを走査するか，sを走査するか．
+- と言うか，なんならCode2の方が平均的な入力に対しては走査数少なさそう．
+
 #### Code1
 ```cpp
 #include <vector>
@@ -8,11 +20,11 @@
 class Solution {
 public:
     bool wordBreak(const string s, const vector<string>& wordDict) {
-        return CheckConstractability(s, wordDict, is_constructable);
+        return CheckConstructability(s, wordDict);
     }
 
 private:
-    bool CheckConstractability(const string s, 
+    bool CheckConstructability(const string s, 
                                const vector<string>& wordDict) {
         if (s.empty()) {
             return true;
@@ -32,7 +44,7 @@ private:
             if (prefix != target) {
                 continue;
             }
-            if (CheckConstractability(suffix, wordDict, is_constructable)) {
+            if (CheckConstructability(suffix, wordDict)) {
                 return true;
             }
         }
@@ -41,6 +53,136 @@ private:
 };
 ```
 
+#### Code2
+```cpp
+#include <vector>
+
+class Solution {
+public:
+    bool wordBreak(const string s, std::vector<string>& wordDict) {
+        std::vector<int> is_constructable_from(s.size(), kNotChecked); // 0: not checked, 1: checked(not constructable from there)
+        std::sort(wordDict.begin(), wordDict.end(), [](string& a, string& b) { return a.size() > b.size(); });
+        return CheckConstructability(s, 0, wordDict, is_constructable_from);
+    }
+
+private:
+    static constexpr int kNotChecked = 0;
+    static constexpr int kNotConstructable = 1;
+
+    bool CheckConstructability(const string s, 
+                               const int start_pos,
+                               const std::vector<string>& wordDict,
+                               std::vector<int>& is_constructable_from) {
+        if (start_pos == s.size()) {
+            return true;
+        }
+        if (is_constructable_from[start_pos] == kNotConstructable) {
+            return false;
+        }
+
+        string substring = s.substr(start_pos);
+        for (string target : wordDict) {
+            if (substring == target) {
+                return true;
+            }
+
+            // s != target
+            if (substring.size() < target.size()) {
+                continue;
+            }
+            string prefix = substring.substr(0, target.size());
+            string suffix = substring.substr(target.size());
+            int new_start_pos = start_pos + target.size();
+            if (prefix != target) {
+                continue;
+            }
+            if (CheckConstructability(s, new_start_pos, wordDict, is_constructable_from)) {
+                return true;
+            }
+        }
+        is_constructable_from[start_pos] = kNotConstructable;
+        return false;
+    }
+};
+```
+#### Code3
+```cpp
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        if (s.empty()) {
+            throw std::invalid_argument("`s` must not be empty.");
+        }
+
+        std::unordered_set<string> word_dict(wordDict.begin(), wordDict.end());
+        return CheckConstructability(s, word_dict);
+    }
+
+private:
+    bool CheckConstructability(const string s, const std::unordered_set<string>& word_dict) {
+        if (word_dict.contains(s)) {
+            return true;
+        }
+
+        for (int partition_pos = s.size() - 1; 0 <= partition_pos; --partition_pos) {
+            string prefix = s.substr(0, partition_pos);
+            if (!word_dict.contains(prefix)) {
+                continue;
+            }
+            string suffix = s.substr(partition_pos);
+            if (CheckConstructability(suffix, word_dict)) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+```
+
+#### Code4
+```cpp
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        if (s.empty()) {
+            throw std::invalid_argument("`s` must not be empty.");
+        }
+
+        std::unordered_set<string> word_dict(wordDict.begin(), wordDict.end());
+        std::vector<int> is_constructable_from(s.size(), kNotChecked);
+        return CheckConstructability(s, 0, word_dict, is_constructable_from);
+    }
+
+private:
+    static constexpr int kNotChecked = 0;
+    static constexpr int kNotConstructable = 1;
+
+    bool CheckConstructability(const string s,
+                               const int start_pos,
+                               const std::unordered_set<string>& word_dict,
+                               std::vector<int>& is_constructable_from) {
+        string substring = s.substr(start_pos);
+        if (word_dict.contains(substring)) {
+            return true;
+        }
+        if (is_constructable_from[start_pos] == kNotConstructable) {
+            return false;
+        }
+
+        for (int prefix_length = substring.size(); 1 <= prefix_length; --prefix_length) {
+            string prefix = s.substr(start_pos, prefix_length);
+            if (!word_dict.contains(prefix)) {
+                continue;
+            }
+            if (CheckConstructability(s, start_pos + prefix_length, word_dict, is_constructable_from)) {
+                return true;
+            }
+        }
+        is_constructable_from[start_pos] = kNotConstructable;
+        return false;
+    }
+};
+```
 
 過去に解いたものが[PastCode](#PastCode)．個人的なメモに近いのでレビューはしていただかなくても良いかもしれません．
 
