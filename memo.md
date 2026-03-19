@@ -1,16 +1,16 @@
 # Step 1
-過去に解いてから時間が経ってので解き直してみる．再帰的にできそうなのでとりあえず書いてみて([Code1](#Code1)，その後でメモ化を試みる([Code2](#Code2))．
+　過去に解いてから時間が経ってので解き直してみる．再帰的にできそうなのでとりあえず書いてみて([Code1](#Code1)，その後でメモ化を試みる([Code2](#Code2))．
 
-メモ化を試みた際，単にメモを用意するだけではTLEだった．効率よくメモに書き込む必要があった．ここでの効率は，`wordDict`から文字数について貪欲に選ぶと言うことに対応していた．つまり，できるだけ早く`is_constructable_from`に書き込みをするべきで，それにはできるだけ早く末尾に近い（再帰呼び出しが起こらないことに対応）`start_pos`を引数にもつ`CheckConstructability()`の呼び出しに到達する必要がある．そのためには`start_pos`が大きくなる順に，つまり文字数が大きい順に`wordDict`から取り出すべきと言うことになる．
+　メモ化を試みた際，単にメモを用意するだけではTLEだった．効率よくメモに書き込む必要があった．ここでの効率は，`wordDict`から文字数について貪欲に選ぶと言うことに対応していた．つまり，できるだけ早く`is_constructable_from`に書き込みをするべきで，それにはできるだけ早く末尾に近い（再帰呼び出しが起こらないことに対応）`start_pos`を引数にもつ`CheckConstructability()`の呼び出しに到達する必要がある．そのためには`start_pos`が大きくなる順に，つまり文字数が大きい順に`wordDict`から取り出すべきと言うことになる．
 
-このTLEは事前に見積もれるようになりたい．最悪のケースでは
+　このTLEは事前に見積もれるようになりたい．最悪のケースでは
 - 入力:
     - `s = 'a' * 299 + 'b'`
     - `wordDict = {"a", "aa", ... , 'a'*20, (あとはaを使わずbを含まない適当な文字列を1980個)}`
 
 この時，wordDictから取り出す順番を工夫しないと，300回の再帰呼び出しがあり，各呼び出しで2000回wordDictから1要素を取り出すループを回すことになる．要するに最悪で`s.size() * wordDict.size()`だけかかるわけで，$`6 \times 10^5`$ほどのステップを要する．
 
-この辺まで考えて，wordDictをhashmap的なものに入れて，`s`を走査してはhashmap lookupを行えばO(s.size())でできるんじゃないかと思った．[Code3](#Code3)．しかし冷静に考えればhashmapでヒットしたあと再帰呼び出しするんだから$`O(n^2)`$だった．一応まあメモ化してCode2と同様に$`O(n)`$に落としてみた([Code4](#Code4))．結局[Code2](#Code2)と似た感じに．違いはwordDictを走査するか，sを走査するか．
+　この辺まで考えて，wordDictをhashmap的なものに入れて，`s`を走査してはhashmap lookupを行えばO(s.size())でできるんじゃないかと思った．[Code3](#Code3)．しかし冷静に考えればhashmapでヒットしたあと再帰呼び出しするんだから$`O(n^2)`$だった．一応まあメモ化してCode2と同様に$`O(n)`$に落としてみた([Code4](#Code4))．結局[Code2](#Code2)と似た感じに．違いはwordDictを走査するか，sを走査するか．
 - と言うか，なんならCode2の方が平均的な入力に対しては走査数少なさそう．
 
 #### Code1
@@ -386,3 +386,47 @@ public:
 ```
 
 # Step 2
+
+　[正規表現との関連付け](https://discord.com/channels/1084280443945353267/1200089668901937312/1221644164576444527)．正規表現はオートマトンと対応するから，適切なオートマトンを導入して入力を先頭から1文字ずつ入れていった最後の状態がゴール状態かどうかで判定できる．つまり一度舐めれば判定できるはず．
+
+しかし書いてあるコードを読んでも，最終的にDFS的になっているのはわかるが，あんまりオートマトンという解釈ができない．[こちら](https://discord.com/channels/1084280443945353267/1200089668901937312/1222020658955816960)をみても同様．なんか入力を一つずつ入れている感覚がない．これは`s`を舐めているのか？
+
+　いずれにせよ変数の置き方や条件の立て方などは参考になったので，書き直してみる．[Code5](#Code5)．
+
+#### Code5
+```cpp
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        std::stack<int> frontier; 
+        // frontier: `s`のindexで，まだそこからwordDictの要素を用いて到達できるindexを調べていないものの集合．
+        std::set<int> reachable;
+        // reachable : wordDictによってs.substr(0, i)が構成可能となるようなiの集合．
+        frontier.push(0);
+        reachable.insert(0);
+
+        while (!frontier.empty()) {
+            int start = frontier.top();
+            frontier.pop();
+            for(string word : wordDict) {
+                int last = start + word.size();
+                // 条件に当てはまらないものを除く
+                if (reachable.contains(last)) {
+                    continue;
+                }
+                if (s.substr(start, word.size()) != word) {
+                    continue;
+                }
+
+                // この時点で`s.substr(0, last)`はwordDictから構成可能．
+                if (last == s.size()) {
+                    return true;
+                }
+                reachable.insert(last);
+                frontier.push(last);
+            }
+        }
+        return false;
+    }
+};
+```
