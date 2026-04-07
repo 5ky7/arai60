@@ -186,6 +186,28 @@ private:
 
 # Step 2
 [見たことない方法](https://github.com/Yoshiki-Iwasa/Arai60/pull/36/changes#r1712955053)があったので自分なりに整理．
+C++で書いたのが[Code3](#Code3)，もっと綺麗に書けそう．pythonと違ってkeyの設定ができないから，numsをtransformするという方針をとった（pythonならこんなことしなくてもkeyに関数を入れておけば自動的に比較時にkeyを適用してから比較する，ということになる）．
+#### Code3
+```cpp
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        auto priority = [&](int x) -> tuple<bool, bool> {
+            return std::make_tuple(x <= nums.back(), target <= x);
+        };
+        vector<std::tuple<bool, bool>> nums_transformed(nums.size());
+        std::transform(nums.begin(), nums.end(), nums_transformed.begin(), priority);
+        auto it = std::lower_bound(nums_transformed.begin(), nums_transformed.end(), priority(target));
+        int it_index = std::distance(nums_transformed.begin(), it);
+        if (it == nums_transformed.end() || nums[it_index] != target) { 
+            return -1;
+        }
+        return it_index;
+    }
+};
+```
+
+以下，引用先のコードの整理．
 ```python
 class Solution:
     def search(self, nums: List[int], target: int) -> int:
@@ -214,24 +236,4 @@ class Solution:
            - 座標圧縮的に，単調増加なnumsの部分列をFalse, Trueの列にmappingする．この時bisect_leftを実行することで普通の二分探索ができる．
            - つまり，実は`return (x <= nums[-1], target <= x)`は`return (x <= nums[-1], x)`でも良い！（どうせそのままでも増加列になっており，この部分に二分探索を適用すれば良いから）
    - というわけで，bisect_leftを2回やっているようなものなのである．1回目のbisect_leftは[Code1](#Code1)の`int pos_min = FindMinIndex(nums);`に対応し，2回目のbisect_leftは[Code1](#Code1)の`if ... else ...`内の`lower_bound`である．
-  
-C++で書いたら以下のようになったが，もっと綺麗に書けそう．pythonと違ってkeyの設定ができないから，numsをtransformするという方針をとった（pythonならこんなことしなくてもkeyに関数を入れておけば自動的に比較時にkeyを適用してから比較する，ということになる）．
-#### Code3
-```cpp
-class Solution {
-public:
-    int search(vector<int>& nums, int target) {
-        auto priority = [&](int x) -> tuple<bool, bool> {
-            return std::make_tuple(x <= nums.back(), target <= x);
-        };
-        vector<std::tuple<bool, bool>> nums_transformed(nums.size());
-        std::transform(nums.begin(), nums.end(), nums_transformed.begin(), priority);
-        auto it = std::lower_bound(nums_transformed.begin(), nums_transformed.end(), priority(target));
-        int it_index = std::distance(nums_transformed.begin(), it);
-        if (it == nums_transformed.end() || nums[it_index] != target) { 
-            return -1;
-        }
-        return it_index;
-    }
-};
-```
+
