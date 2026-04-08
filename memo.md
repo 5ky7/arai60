@@ -430,3 +430,45 @@ public:
     }
 };
 ```
+
+---
+[Code5](#Code5)の別バリエーションが[Code6](#Code6)．whileループ内で`wordDict`を走査しては`s`の部分文字列に対応するものがあるかチェックする部分があったが，これを`s`を走査しては`wordDict`に対応するものがあるかチェックする方式に．時間計算量が$`O(nmk)`$から$`O(n^2)`$に．ただし$`n = \text{s.size()}, \, m = \text{wordDict.size()},\, k = \text{max\_len(wordDict)}`$
+
+今回の場合は$`km <= 20000, \, n <= 300`$なのでCode6の方が最悪計算時間は短いはず．
+```cpp
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        std::unordered_set<string> word_dict(wordDict.begin(), wordDict.end());
+        std::stack<int> frontier; 
+        // frontier: `s`のindexで，まだそこからwordDictの要素を用いて到達できるindexを調べていないものの集合．
+        // frontierの要素iに対し，s[i]より前は構築可能であることが要請される．
+        std::set<int> reachable;
+        // reachable : wordDictによってs.substr(0, i)が構成可能となるようなiの集合．
+        // 
+        frontier.push(0);
+        reachable.insert(0);
+
+        while (!frontier.empty()) {
+            int start = frontier.top();
+            frontier.pop();
+            string prefix = "";
+            for (int end = start + 1; end <= s.size(); ++end) {
+                prefix += s[end - 1];
+                if (reachable.contains(end)) {
+                    continue;
+                }
+                // prefix : s[start]からs[end - 1]までからなる部分文字列
+                if (word_dict.contains(prefix)) {
+                    reachable.insert(end);
+                    frontier.push(end);
+                }
+            }
+        }
+        if (reachable.contains(s.size())) {
+            return true;
+        }
+        return false;
+    }
+};
+```
