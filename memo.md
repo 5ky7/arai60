@@ -74,3 +74,13 @@ public:
 ```
 
 # Step 2
+---
+setやmapを用いる代わりに，[substringに対してcontainsを用いる](https://github.com/5103246/LeetCode_Arai60/pull/45/changes#diff-221a2b21bf02260a855f6cf00ae981a1ad625db58659bdc18e2b6ad3bf6b1a1bR52)コードもあった．正確にはstringだとsubstrでコピーが走るのでstring_viewにしている．ただstring(_view)のcontainsは最悪で線形時間かかるからcontainsの実行は定数時間ではなくなる．にしてもO(n^3)で回るのはC++の強いところだし，その強みがあるからこそ実装でsliding windowが思い浮かばなくても計算時間を見積もっていけそうならシンプルな方法で実装するのも手であることは忘れないようにしたい．
+
+こちらのコードの計算量は$`O(n^3)`$だと思っていたが，実際には`break`の打ち切りがあり，substringの長さは登場する文字の種類($`w`$とする)以上にはならないので$`O(nw^2)`$で抑えられる．
+
+文字の種類数が事前にわかっていればmapの代わりに[vector(array)でも実装可能](https://github.com/5103246/LeetCode_Arai60/pull/45/changes#diff-221a2b21bf02260a855f6cf00ae981a1ad625db58659bdc18e2b6ad3bf6b1a1bR91)．
+実質的にはハッシュテーブルと同じことをやっていて，ハッシュ関数の定義域と値域が同じケースと解釈可能．
+
+---
+
